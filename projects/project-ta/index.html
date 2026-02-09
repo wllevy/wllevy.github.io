@@ -14,6 +14,8 @@
     body { margin:0; overflow-x:hidden; background:#f8fafc; color:#1e293b; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
     
     #canvas-container { position:fixed; inset:0; z-index:0; pointer-events: none;}
+    /* Maze canvas should stay crisp on high-DPI displays */
+    canvas { image-rendering: pixelated; }
     
     /* Light Glass Navbar */
     nav { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.8); border-bottom: 1px solid rgba(0,0,0,0.05); }
@@ -95,6 +97,7 @@
     <div class="hidden md:flex gap-8 text-sm font-medium">
       <span onclick="switchTab('reaction')" id="nav-reaction" class="nav-link active-link">Reaction Test</span>
       <span onclick="switchTab('matrix')" id="nav-matrix" class="nav-link">Matrix Builder</span>
+      <span onclick="switchTab('maze')" id="nav-maze" class="nav-link">Maze</span>
       <span onclick="switchTab('report')" id="nav-report" class="nav-link">Lab Report</span>
     </div>
   </nav>
@@ -115,6 +118,7 @@
         <div class="flex md:hidden bg-slate-100 p-1 rounded-lg mt-4 w-full border border-slate-200">
             <button onclick="switchTab('reaction')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors bg-white text-blue-600 shadow-sm" id="mob-tab-reaction">Timer</button>
             <button onclick="switchTab('matrix')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors text-slate-500 hover:text-slate-700" id="mob-tab-matrix">Matrix</button>
+            <button onclick="switchTab('maze')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors text-slate-500 hover:text-slate-700" id="mob-tab-maze">Maze</button>
             <button onclick="switchTab('report')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors text-slate-500 hover:text-slate-700" id="mob-tab-report">Report</button>
         </div>
       </div>
@@ -216,7 +220,41 @@
             </div>
         </div>
       </div>
+      <!-- TAB 2.5: Maze Generator -->
+      <div id="tab-maze" class="tab-content">
+        <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 border border-slate-200 min-h-[400px]">
+                <div class="mb-4 text-center">
+                    <h3 class="text-slate-800 font-bold text-lg">Maze Generator</h3>
+                    <p class="text-xs text-slate-500">Enter the last 4 digits of your Student ID to generate your unique maze.</p>
+                </div>
 
+                <div class="flex gap-3 mb-4 justify-center">
+                    <input type="text" id="studentId" placeholder="Last 4 digits (e.g. 1234)" maxlength="8" class="px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none w-48 text-center text-lg font-mono transition-colors">
+                    <button onclick="initMaze()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm active:transform active:scale-95">
+                        <i class="fa-solid fa-play"></i> Generate
+                    </button>
+                </div>
+
+                <div id="gameArea" class="hidden flex-col items-center animate-fade-in w-full">
+                    <div class="flex flex-wrap justify-center items-center gap-4 mb-4 text-sm bg-slate-50 px-4 py-2 rounded-full border border-slate-200 shadow-inner w-full">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-slate-600">Current Cell:</span>
+                            <span id="coordDisplay" class="font-mono bg-white border border-slate-300 px-2 py-0.5 rounded text-blue-700 w-28 text-center">-</span>
+                        </div>
+                        <div class="flex gap-4 text-xs font-medium">
+                            <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-green-500"></div> Start (0, 0)</span>
+                            <span class="flex items-center gap-1"><div class="w-2.5 h-2.5 rounded-full bg-red-500"></div> End (14, 14)</span>
+                        </div>
+                    </div>
+
+                    <div class="relative group w-full flex justify-center">
+                        <canvas id="mazeCanvas" class="border-4 border-slate-800 rounded shadow-lg bg-slate-800 cursor-crosshair"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
       <!-- TAB 3: Lab Report (FIXED INTEGRATION) -->
       <div id="tab-report" class="tab-content">
         <div class="report-container max-w-4xl mx-auto">
@@ -228,7 +266,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 text-slate-600 mt-6">
                     <div class="space-y-2">
                         <p class="font-bold text-xl text-slate-800">Individual Report</p>
-                        <p class="text-sm text-slate-600"><span class="font-semibold text-slate-900">Due date:</span> 27 Feb 2026, 23:59</p>
+                        <p class="text-sm text-slate-600"><span class="font-semibold text-slate-900">Due date:</span> 13 Feb 2026, 23:59</p>
                         <p class="text-sm text-slate-600"><span class="font-semibold text-slate-900">Include:</span> Code, figures, Screenshot</p>
                     </div>
                     
@@ -251,16 +289,17 @@
                 <section>
                     <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">Part 0: Data Acquisition</h2>
                     <p class="mb-6 text-lg">
-                        Before starting the coding tasks, complete the two interactive mini-games on the course page. These games will generate the unique datasets you need for this report.
+                        Before starting the coding tasks, complete the interactive mini-games and the Maze generator on the course page. These will produce the datasets you need for this report (reaction times, pixel art, and a unique \(15\times15\) maze).
                     </p>
                     
-                    <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg shadow-sm mb-8">
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg shadow-sm mb-6">
                         <h4 class="font-bold text-blue-900 text-sm uppercase mb-3 tracking-wide">Task Checklist</h4>
                         <ol class="list-decimal list-inside text-blue-800 space-y-2 font-medium">
                             <li class="pl-2"><strong>Reaction Time Test:</strong> Click the changing area 10 times.</li>
                             <li class="pl-2"><strong>Pixel Art:</strong> Draw a pattern on the \(8\times8\) grid.</li>
+                            <li class="pl-2"><strong>Maze Generator:</strong> Use the last 4 digits of your student ID to generate a unique \(15\times15\) maze and identify the solution path turning points.</li>
                         </ol>
-                    </div>
+                    </div> 
 
                     <p class="text-sm text-slate-500 italic border border-dashed border-slate-300 p-4 rounded-lg text-center bg-slate-50/50">
                         <i class="fa-solid fa-circle-info mr-2 text-blue-500"></i>
@@ -404,16 +443,26 @@
                         </ul>
                     </div>
                 </section>
-            </div>
 
-            <!-- Print Button -->
-            <div class="flex justify-center mt-20 mb-12 print:hidden">
-                <button onclick="window.print()" class="group px-8 py-3 bg-slate-800 text-white font-medium rounded-full hover:bg-slate-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-3 transform hover:-translate-y-1">
-                    <i class="fa-solid fa-print group-hover:scale-110 transition-transform"></i> 
-                    Print / Save as PDF
-                </button>
-            </div>
+                <!-- TASK 3: Maze Solution Plotting -->
+                <section>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">Problem 3: Maze Solution Plotting</h2>
+                    <p class="mb-6">
+                        <strong>Scenario:</strong> You have been given a unique map generated based on your student ID. Your task is to visualize the solution path for a robot to travel from the starting point to the destination.
+                    </p>
 
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">3.1</span> Instructions
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400 text-sm">
+                            <li><strong>Generate the Map:</strong> Go to the Maze tab and enter the last 4 digits of your Student ID to generate the \(15\times15\) maze.</li>
+                            <li><strong>Trace the Path:</strong> Find a path from Start (green, at \(0,0\)) to End (red, at \(14,14\)). Hover the mouse over the maze to view coordinates. Record the coordinates \((x, y)\) of the turning points (where the robot changes direction).</li>
+                            <li><strong>Plot in Python:</strong> Plot the maze solution path on a 2D plot and clearly mark the Start and End points; ensure the plot orientation matches the maze.</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
         </div>
       </div>
 
@@ -522,6 +571,10 @@
             title.innerText = 'Matrix Builder';
             desc.innerText = 'Draw your initial to generate a binary matrix.';
             setTimeout(initGrid, 50); // Re-render grid
+        } else if (tabName === 'maze') {
+            title.innerText = 'Maze Generator';
+            desc.innerText = 'Generate your student-ID maze.';
+            setTimeout(initMaze, 50); // Initialize maze when opening
         } else if (tabName === 'report') {
             title.innerText = 'Assignment Report';
             desc.innerText = 'Review the requirements and questions.';
@@ -886,6 +939,133 @@
             e.preventDefault();
         }
     });
+
+    // --- TOOL 3: MAZE GENERATOR ---
+    class SeededRandom {
+        constructor(seed) { this.seed = seed; }
+        next() { this.seed = (this.seed * 9301 + 49297) % 233280; return this.seed / 233280; }
+    }
+
+    const MAZE_SIZE = 15;
+    const MAZE_CELL = 30;
+    const MAZE_BORDER = 2;
+    let mazeData = [];
+    let mazeCanvasEl, mazeCtx, mazeCoordEl;
+    let mazeInitialized = false;
+
+    function initMaze() {
+        // prepare canvas and elements once
+        mazeCanvasEl = document.getElementById('mazeCanvas');
+        mazeCtx = mazeCanvasEl && mazeCanvasEl.getContext ? mazeCanvasEl.getContext('2d') : null;
+        mazeCoordEl = document.getElementById('coordDisplay');
+
+        if (!mazeCanvasEl || !mazeCtx || !mazeCoordEl) return;
+
+        if (!mazeInitialized) {
+            mazeCanvasEl.addEventListener('mousemove', handleMazeMouseMove);
+            mazeCanvasEl.addEventListener('mouseleave', () => {
+                mazeCoordEl.innerText = "-";
+                drawMaze();
+            });
+            mazeInitialized = true;
+        }
+
+        const input = document.getElementById('studentId').value.replace(/\D/g, '');
+        if (input.length < 4) {
+            // only initialize canvas, don't generate until valid input provided
+            return;
+        }
+        const seed = parseInt(input.slice(-4));
+        generateMaze(seed);
+        document.getElementById('gameArea').classList.remove('hidden');
+        document.getElementById('gameArea').classList.add('flex');
+        drawMaze();
+    }
+
+    function generateMaze(seed) {
+        const rng = new SeededRandom(seed);
+        mazeData = Array(MAZE_SIZE).fill().map(() => Array(MAZE_SIZE).fill(1));
+
+        const stack = [];
+        const startX = 0, startY = 0;
+        mazeData[startY][startX] = 0;
+        stack.push([startX, startY]);
+
+        const directions = [[0,-2],[0,2],[-2,0],[2,0]];
+
+        while (stack.length > 0) {
+            const [cx, cy] = stack[stack.length - 1];
+            const shuffledDirs = directions.sort(() => rng.next() - 0.5);
+            let moved = false;
+            for (let [dx, dy] of shuffledDirs) {
+                const nx = cx + dx, ny = cy + dy;
+                if (nx >= 0 && nx < MAZE_SIZE && ny >= 0 && ny < MAZE_SIZE && mazeData[ny][nx] === 1) {
+                    mazeData[cy + dy/2][cx + dx/2] = 0;
+                    mazeData[ny][nx] = 0;
+                    stack.push([nx, ny]);
+                    moved = true;
+                    break;
+                }
+            }
+            if (!moved) stack.pop();
+        }
+
+        mazeData[MAZE_SIZE-1][MAZE_SIZE-1] = 0;
+        if (mazeData[MAZE_SIZE-2][MAZE_SIZE-1] === 1 && mazeData[MAZE_SIZE-1][MAZE_SIZE-2] === 1) {
+            mazeData[MAZE_SIZE-1][MAZE_SIZE-2] = 0;
+        }
+    }
+
+    function drawMaze(highlightX = -1, highlightY = -1) {
+        const pixelSize = MAZE_SIZE * MAZE_CELL + MAZE_BORDER * 2;
+        if(!mazeCanvasEl || !mazeCtx) return;
+        mazeCanvasEl.width = pixelSize;
+        mazeCanvasEl.height = pixelSize;
+        mazeCtx.fillStyle = '#1f2937';
+        mazeCtx.fillRect(0,0,mazeCanvasEl.width, mazeCanvasEl.height);
+        mazeCtx.translate(MAZE_BORDER, MAZE_BORDER);
+        for (let y = 0; y < MAZE_SIZE; y++) {
+            for (let x = 0; x < MAZE_SIZE; x++) {
+                const isWall = mazeData[y][x] === 1;
+                mazeCtx.fillStyle = isWall ? '#000000' : '#ffffff';
+                mazeCtx.fillRect(x * MAZE_CELL, y * MAZE_CELL, MAZE_CELL, MAZE_CELL);
+                mazeCtx.strokeStyle = '#e5e7eb';
+                mazeCtx.lineWidth = 0.5;
+                mazeCtx.strokeRect(x * MAZE_CELL, y * MAZE_CELL, MAZE_CELL, MAZE_CELL);
+            }
+        }
+        drawDot(0,0,'#22c55e');
+        drawDot(MAZE_SIZE-1, MAZE_SIZE-1, '#ef4444');
+        if (highlightX >= 0 && highlightY >= 0) {
+            mazeCtx.fillStyle = 'rgba(59, 130, 246, 0.5)';
+            mazeCtx.fillRect(highlightX * MAZE_CELL, highlightY * MAZE_CELL, MAZE_CELL, MAZE_CELL);
+            mazeCtx.strokeStyle = '#2563eb';
+            mazeCtx.lineWidth = 2;
+            mazeCtx.strokeRect(highlightX * MAZE_CELL, highlightY * MAZE_CELL, MAZE_CELL, MAZE_CELL);
+        }
+        // reset transform (translate)
+        mazeCtx.setTransform(1,0,0,1,0,0);
+    }
+
+    function drawDot(x,y,color) { const centerX = x*MAZE_CELL + MAZE_CELL/2; const centerY = y*MAZE_CELL + MAZE_CELL/2; const radius = MAZE_CELL/3; mazeCtx.beginPath(); mazeCtx.arc(centerX, centerY, radius, 0, 2*Math.PI); mazeCtx.fillStyle = color; mazeCtx.fill(); mazeCtx.strokeStyle = 'white'; mazeCtx.lineWidth = 2; mazeCtx.stroke(); }
+
+    function handleMazeMouseMove(e) {
+        if(!mazeCanvasEl) return;
+        const rect = mazeCanvasEl.getBoundingClientRect();
+        const scaleX = mazeCanvasEl.width / rect.width;
+        const scaleY = mazeCanvasEl.height / rect.height;
+        const xPos = (e.clientX - rect.left) * scaleX;
+        const yPos = (e.clientY - rect.top) * scaleY;
+        const gridX = Math.floor((xPos - MAZE_BORDER) / MAZE_CELL);
+        const gridY = Math.floor((yPos - MAZE_BORDER) / MAZE_CELL);
+        if (gridX >= 0 && gridX < MAZE_SIZE && gridY >= 0 && gridY < MAZE_SIZE) {
+            mazeCoordEl.innerText = `x=${gridX}, y=${gridY}`;
+            drawMaze(gridX, gridY);
+        } else {
+            mazeCoordEl.innerText = "-";
+            drawMaze();
+        }
+    }
 
     // Initialize
     initGrid();
