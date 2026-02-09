@@ -2,12 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Python Data Collector</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { margin:0; overflow-x:hidden; background:#0f172a; color:#fff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
+    body { margin:0; overflow-x:hidden; background:#0f172a; color:#fff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; user-select: none; }
     #canvas-container { position:fixed; inset:0; z-index:0; pointer-events: none;}
     nav { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background: rgba(15, 23, 42, 0.6); border-bottom: 1px solid rgba(255,255,255,0.05); }
     
@@ -26,20 +26,32 @@
     .nav-link::after { content:''; position:absolute; left:0; bottom:-4px; width:0; height:2px; background:#60a5fa; transition: width .2s; }
     .nav-link:hover::after { width:100%; }
 
-    /* Custom Scrollbar for code blocks */
-    textarea::-webkit-scrollbar { width: 8px; height: 8px; }
-    textarea::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
-    textarea::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    /* Custom Scrollbar */
+    textarea::-webkit-scrollbar, div::-webkit-scrollbar { width: 8px; height: 8px; }
+    textarea::-webkit-scrollbar-track, div::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+    textarea::-webkit-scrollbar-thumb, div::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
     textarea::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
     /* Grid Cell Animation */
-    .grid-cell { transition: all 0.2s ease; }
-    .grid-cell:hover { transform: scale(1.1); z-index: 10; border-color: rgba(96, 165, 250, 0.5); }
+    .grid-cell { transition: background-color 0.1s ease, border-color 0.1s ease; touch-action: none; }
+    /* Removed hover scale transform to make continuous drawing smoother */
+    .grid-cell:hover { border-color: rgba(96, 165, 250, 0.8); }
     
     /* Tab Animation */
     .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
     .tab-content.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Progress Bar Stripe Animation */
+    .progress-stripe {
+        background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
+        background-size: 1rem 1rem;
+        animation: progress-bar-stripes 1s linear infinite;
+    }
+    @keyframes progress-bar-stripes {
+        0% { background-position: 1rem 0; }
+        100% { background-position: 0 0; }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -62,10 +74,10 @@
 
   <!-- Main Content -->
   <main class="relative z-10 pt-28 px-4 pb-10 flex justify-center flex-grow">
-    <div class="content-card w-full max-w-4xl rounded-3xl p-6 md:p-10 flex flex-col min-h-[600px]">
+    <div class="content-card w-full max-w-5xl rounded-3xl p-6 md:p-10 flex flex-col min-h-[600px]">
       
       <!-- Header Area -->
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-slate-700/50 pb-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-700/50 pb-6">
         <div>
           <h1 id="page-title" class="text-3xl md:text-4xl font-extrabold text-white">Reaction Timer</h1>
           <p id="page-desc" class="text-slate-400 mt-2 text-sm">Collect reaction data for your statistical analysis assignment.</p>
@@ -80,73 +92,92 @@
 
       <!-- TAB 1: Reaction Timer -->
       <div id="tab-reaction" class="tab-content active h-full">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full">
+        <div class="flex flex-col gap-6 h-full">
             
             <!-- Game Area -->
-            <div class="flex flex-col gap-4">
-                <div id="game-area" onclick="handleGameClick()" class="relative group cursor-pointer w-full h-64 rounded-2xl bg-slate-800/50 border-2 border-dashed border-slate-600 flex flex-col items-center justify-center transition-all duration-300 hover:border-blue-400 hover:bg-slate-800 overflow-hidden shadow-inner">
-                    <!-- Icon & Status -->
-                    <i id="game-icon" class="fa-solid fa-bolt text-4xl mb-4 text-slate-500 transition-all duration-300"></i>
-                    <h2 id="game-status" class="text-2xl font-bold text-slate-300 select-none">Click to Start</h2>
-                    <p id="game-sub" class="text-sm text-slate-500 mt-2 select-none">Wait for green, then click fast!</p>
-                    
-                    <!-- Ripple Effect Container -->
-                    <div class="absolute inset-0 bg-white/5 opacity-0 transition-opacity duration-100" id="flash-overlay"></div>
-                </div>
+            <div id="game-area" onclick="handleGameClick()" class="relative group cursor-pointer w-full h-[350px] md:h-[400px] rounded-2xl bg-slate-800/50 border-2 border-dashed border-slate-600 flex flex-col items-center justify-center transition-all duration-300 hover:border-blue-400 hover:bg-slate-800 overflow-hidden shadow-inner select-none">
+                <i id="game-icon" class="fa-solid fa-bolt text-5xl md:text-6xl mb-6 text-slate-500 transition-all duration-300"></i>
+                <h2 id="game-status" class="text-3xl md:text-5xl font-bold text-slate-300 select-none text-center">Click to Start</h2>
+                <p id="game-sub" class="text-base md:text-lg text-slate-500 mt-3 select-none">Wait for green, then click fast!</p>
+                <div class="absolute inset-0 bg-white/5 opacity-0 transition-opacity duration-100" id="flash-overlay"></div>
+            </div>
 
-                <div class="flex justify-between items-center bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
-                    <span class="text-slate-400 text-sm">Attempts: <span id="count-badge" class="text-white font-mono font-bold">0</span></span>
-                    <button onclick="resetGame()" class="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-2">
-                        <i class="fa-solid fa-rotate-right"></i> Reset
-                    </button>
+            <!-- Progress Bar Section -->
+            <div class="w-full bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Progress</span>
+                    <div class="flex gap-4 items-center">
+                        <span class="text-xs text-slate-400"><span id="progress-text" class="text-white font-bold">0</span> / 10 Completed</span>
+                        <button onclick="resetGame()" class="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1.5 px-2 py-1 rounded hover:bg-red-500/10">
+                            <i class="fa-solid fa-rotate-right"></i> Reset
+                        </button>
+                    </div>
+                </div>
+                <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                    <div id="progress-bar" class="h-full bg-blue-600 w-0 transition-all duration-500 ease-out relative"></div>
                 </div>
             </div>
 
-            <!-- Data Output -->
-            <div class="flex flex-col h-full">
+            <!-- Data Array Output -->
+            <div class="flex flex-col">
                 <div class="flex justify-between items-center mb-2">
-                    <label class="text-xs font-bold text-blue-400 uppercase tracking-wider">Generated Python Code</label>
-                    <button onclick="copyToClipboard('output-reaction', this)" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded-md transition-all flex items-center gap-2">
-                        <i class="fa-regular fa-copy"></i> Copy
+                    <label class="text-xs font-bold text-green-400 uppercase tracking-wider">Results Array</label>
+                    <button onclick="copyArrayData(this)" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-all flex items-center gap-2 border border-slate-600">
+                        <i class="fa-regular fa-copy"></i> Copy Array
                     </button>
                 </div>
-                <div class="relative flex-grow">
-                    <textarea id="output-reaction" readonly class="w-full h-full min-h-[200px] bg-slate-950/50 border border-slate-700 rounded-xl p-4 font-mono text-sm text-green-400 focus:outline-none focus:border-blue-500 resize-none leading-relaxed">data = np.array([])</textarea>
+                <div class="relative w-full">
+                    <div id="array-display" class="w-full bg-slate-950/80 border border-slate-700 rounded-xl p-4 font-mono text-sm text-green-400 overflow-x-auto whitespace-nowrap shadow-inner min-h-[60px] flex items-center">
+                        []
+                    </div>
                 </div>
             </div>
         </div>
       </div>
 
-      <!-- TAB 2: Matrix Builder -->
+      <!-- TAB 2: Matrix Builder (IMPROVED) -->
       <div id="tab-matrix" class="tab-content">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="flex flex-col lg:flex-row gap-8 h-full">
             
-            <!-- Grid Area -->
-            <div class="flex flex-col items-center justify-center bg-slate-800/30 rounded-2xl p-6 border border-slate-700/50">
-                <div class="mb-4 text-center">
-                    <p class="text-sm text-slate-400">Draw your initial (8x8)</p>
-                </div>
-                <!-- The Grid -->
-                <div id="pixel-grid" class="grid grid-cols-8 gap-1.5 p-2 bg-slate-900 rounded-lg shadow-2xl border border-slate-700">
-                    <!-- Cells generated by JS -->
+            <!-- Grid Area (Expanded & Interactive) -->
+            <div class="flex-1 flex flex-col items-center justify-center bg-slate-800/30 rounded-2xl p-6 border border-slate-700/50 min-h-[500px]">
+                <div class="mb-4 text-center flex flex-col gap-1">
+                    <h3 class="text-white font-bold text-lg">Draw Pattern</h3>
+                    <p class="text-xs text-slate-400">Click & Drag to draw. <br class="md:hidden">Click filled cells to erase.</p>
                 </div>
                 
-                <div class="mt-6 flex gap-3">
-                    <button onclick="clearGrid()" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm transition-all">Clear</button>
-                    <button onclick="fillGrid()" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm transition-all">Fill</button>
+                <!-- The Grid Container -->
+                <div class="relative p-3 bg-slate-900 rounded-xl shadow-2xl border border-slate-700">
+                    <!-- Grid generated by JS -->
+                    <div id="pixel-grid" class="grid grid-cols-8 gap-1.5 touch-none"></div>
+                </div>
+                
+                <div class="mt-8 flex gap-4 w-full max-w-xs justify-center">
+                    <button onclick="clearGrid()" class="flex-1 px-4 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition-all shadow-lg border border-slate-600">
+                        <i class="fa-solid fa-trash-can mr-2"></i>Clear
+                    </button>
+                    <button onclick="fillGrid()" class="flex-1 px-4 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition-all shadow-lg border border-slate-600">
+                        <i class="fa-solid fa-fill-drip mr-2"></i>Fill
+                    </button>
                 </div>
             </div>
 
-            <!-- Code Output -->
-            <div class="flex flex-col h-full">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="text-xs font-bold text-blue-400 uppercase tracking-wider">Generated Python Code</label>
-                    <button onclick="copyToClipboard('output-matrix', this)" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded-md transition-all flex items-center gap-2">
-                        <i class="fa-regular fa-copy"></i> Copy
+            <!-- Code Output (Simplified) -->
+            <div class="lg:w-1/3 flex flex-col gap-4">
+                <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50 h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="text-sm font-bold text-blue-400 uppercase tracking-wider">Result Matrix</label>
+                        <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">8x8</span>
+                    </div>
+                    
+                    <div class="relative flex-grow mb-4">
+                        <textarea id="output-matrix" readonly class="w-full h-full bg-slate-950 border border-slate-700 rounded-xl p-4 font-mono text-xs text-blue-300 focus:outline-none focus:border-blue-500 resize-none leading-relaxed tracking-wide shadow-inner"></textarea>
+                    </div>
+
+                    <button onclick="copyToClipboard('output-matrix', this)" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group">
+                        <i class="fa-regular fa-copy group-hover:scale-110 transition-transform"></i> Copy Matrix
                     </button>
-                </div>
-                <div class="relative flex-grow">
-                    <textarea id="output-matrix" readonly class="w-full h-full min-h-[300px] bg-slate-950/50 border border-slate-700 rounded-xl p-4 font-mono text-xs md:text-sm text-blue-300 focus:outline-none focus:border-blue-500 resize-none leading-relaxed"></textarea>
+                    <p class="text-[10px] text-slate-500 text-center mt-3">Ready to paste into your Python script</p>
                 </div>
             </div>
         </div>
@@ -161,7 +192,7 @@
   </footer>
 
   <script>
-    // --- CANVAS ANIMATION (Starfield/Network) ---
+    // --- CANVAS ANIMATION ---
     const canvas = document.getElementById('canvas-container');
     const ctx = canvas.getContext('2d');
     let width, height;
@@ -189,24 +220,20 @@
             if (this.y < 0 || this.y > height) this.vy *= -1;
         }
         draw() {
-            ctx.fillStyle = 'rgba(148, 163, 184, 0.2)'; // Slate-400 with low opacity
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.2)';
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fill();
         }
     }
 
-    // Create particles
     for (let i = 0; i < 50; i++) particles.push(new Particle());
 
     function animate() {
         ctx.clearRect(0, 0, width, height);
-        
-        // Draw connections
         particles.forEach((p, index) => {
             p.update();
             p.draw();
-            // Connect close particles
             for (let j = index + 1; j < particles.length; j++) {
                 const p2 = particles[j];
                 const dx = p.x - p2.x;
@@ -229,12 +256,9 @@
 
     // --- TAB SYSTEM ---
     function switchTab(tabName) {
-        // Hide all contents
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        // Show selected
         document.getElementById(`tab-${tabName}`).classList.add('active');
         
-        // Update Header Text
         const title = document.getElementById('page-title');
         const desc = document.getElementById('page-desc');
         
@@ -243,10 +267,11 @@
             desc.innerText = 'Collect reaction data for your statistical analysis assignment.';
         } else {
             title.innerText = 'Matrix Builder';
-            desc.innerText = 'Draw your initial to generate a binary matrix for linear algebra.';
+            desc.innerText = 'Draw your initial to generate a binary matrix.';
+            // Re-render grid to ensure sizing is correct if hidden previously
+            setTimeout(initGrid, 50);
         }
 
-        // Update Mobile Buttons
         const btnR = document.getElementById('mob-tab-reaction');
         const btnM = document.getElementById('mob-tab-matrix');
         if(tabName === 'reaction') {
@@ -264,23 +289,27 @@
 
 
     // --- TOOL 1: REACTION GAME ---
-    let gameState = 'waiting'; // waiting, ready, green, finished
+    let gameState = 'waiting';
     let startTime, timeoutId;
     let reactionTimes = [];
+    const MAX_ATTEMPTS = 10;
+    
     const gameArea = document.getElementById('game-area');
     const gameStatus = document.getElementById('game-status');
     const gameSub = document.getElementById('game-sub');
     const gameIcon = document.getElementById('game-icon');
-    const outputReaction = document.getElementById('output-reaction');
-    const countBadge = document.getElementById('count-badge');
+    const arrayDisplay = document.getElementById('array-display');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
 
     function handleGameClick() {
+        if (gameState === 'finished') return;
+
         if (gameState === 'waiting') {
-            // Start the sequence
+            if (reactionTimes.length >= MAX_ATTEMPTS) return;
             gameState = 'ready';
             setGameStyle('ready');
-            
-            const delay = 1500 + Math.random() * 2500; // 1.5s to 4s
+            const delay = 1500 + Math.random() * 2500;
             timeoutId = setTimeout(() => {
                 gameState = 'green';
                 startTime = Date.now();
@@ -288,67 +317,87 @@
             }, delay);
 
         } else if (gameState === 'ready') {
-            // Too early
             clearTimeout(timeoutId);
             gameState = 'waiting';
             setGameStyle('early');
             setTimeout(() => setGameStyle('waiting'), 1500);
 
         } else if (gameState === 'green') {
-            // Success
             const time = (Date.now() - startTime) / 1000;
             reactionTimes.push(time);
             updateReactionOutput();
-            gameState = 'waiting';
-            setGameStyle('success', time);
+            if (reactionTimes.length >= MAX_ATTEMPTS) {
+                gameState = 'finished';
+                setGameStyle('finished', time);
+            } else {
+                gameState = 'waiting';
+                setGameStyle('success', time);
+            }
         }
     }
 
     function setGameStyle(state, timeVal) {
-        // Reset classes
-        gameArea.className = "relative group cursor-pointer w-full h-64 rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-200 overflow-hidden shadow-inner select-none";
+        gameArea.className = "relative group cursor-pointer w-full h-[350px] md:h-[400px] rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-200 overflow-hidden shadow-inner select-none";
         
         if (state === 'waiting') {
             gameArea.classList.add('bg-slate-800/50', 'border-dashed', 'border-slate-600', 'hover:border-blue-400', 'hover:bg-slate-800');
             gameStatus.innerText = "Click to Start";
-            gameStatus.className = "text-2xl font-bold text-slate-300";
+            gameStatus.className = "text-3xl md:text-5xl font-bold text-slate-300 text-center";
             gameSub.innerText = "Wait for green, then click fast!";
-            gameIcon.className = "fa-solid fa-bolt text-4xl mb-4 text-slate-500";
-        
+            gameIcon.className = "fa-solid fa-bolt text-5xl md:text-6xl mb-6 text-slate-500";
         } else if (state === 'ready') {
             gameArea.classList.add('bg-red-900/20', 'border-red-500/50');
             gameStatus.innerText = "Wait for Green...";
-            gameStatus.className = "text-2xl font-bold text-red-400 animate-pulse";
+            gameStatus.className = "text-3xl md:text-5xl font-bold text-red-400 animate-pulse text-center";
             gameSub.innerText = "Do not click yet!";
-            gameIcon.className = "fa-regular fa-hand text-4xl mb-4 text-red-400";
-        
+            gameIcon.className = "fa-regular fa-hand text-5xl md:text-6xl mb-6 text-red-400";
         } else if (state === 'green') {
             gameArea.classList.add('bg-emerald-600', 'border-emerald-400', 'shadow-[0_0_50px_rgba(16,185,129,0.5)]');
             gameStatus.innerText = "CLICK NOW!";
-            gameStatus.className = "text-4xl font-black text-white scale-110";
+            gameStatus.className = "text-5xl md:text-7xl font-black text-white scale-110 text-center";
             gameSub.innerText = "";
             gameIcon.className = "hidden";
-        
         } else if (state === 'early') {
             gameArea.classList.add('bg-slate-800', 'border-red-500');
             gameStatus.innerText = "Too Early!";
-            gameStatus.className = "text-2xl font-bold text-red-400";
+            gameStatus.className = "text-3xl md:text-5xl font-bold text-red-400 text-center";
             gameSub.innerText = "Click to try again.";
-            gameIcon.className = "fa-solid fa-triangle-exclamation text-4xl mb-4 text-red-500";
-        
+            gameIcon.className = "fa-solid fa-triangle-exclamation text-5xl md:text-6xl mb-6 text-red-500";
         } else if (state === 'success') {
             gameArea.classList.add('bg-slate-800', 'border-emerald-500/50');
             gameStatus.innerText = `${timeVal}s`;
-            gameStatus.className = "text-4xl font-mono font-bold text-emerald-400";
+            gameStatus.className = "text-5xl md:text-7xl font-mono font-bold text-emerald-400 text-center";
             gameSub.innerText = "Click to continue";
-            gameIcon.className = "fa-solid fa-check text-4xl mb-4 text-emerald-500";
+            gameIcon.className = "fa-solid fa-check text-5xl md:text-6xl mb-6 text-emerald-500";
+        } else if (state === 'finished') {
+            gameArea.classList.add('bg-slate-800', 'border-blue-500');
+            gameStatus.innerText = "Session Complete";
+            gameStatus.className = "text-4xl md:text-5xl font-bold text-blue-400 text-center";
+            gameSub.innerText = "Copy your array below.";
+            gameIcon.className = "fa-solid fa-clipboard-check text-5xl md:text-6xl mb-6 text-blue-500";
+            gameArea.classList.remove('cursor-pointer');
+            gameArea.classList.add('cursor-default');
         }
     }
 
     function updateReactionOutput() {
-        countBadge.innerText = reactionTimes.length;
-        const arrayStr = reactionTimes.join(', ');
-        outputReaction.value = `# Reaction Times Data (n=${reactionTimes.length})\nimport numpy as np\n\nreaction_times = np.array([${arrayStr}])\n\nprint(f"Average: {np.mean(reaction_times):.4f}s")`;
+        const percentage = (reactionTimes.length / MAX_ATTEMPTS) * 100;
+        progressBar.style.width = `${percentage}%`;
+        progressText.innerText = reactionTimes.length;
+        
+        if (reactionTimes.length === MAX_ATTEMPTS) {
+            progressBar.classList.add('bg-green-500', 'progress-stripe');
+            progressBar.classList.remove('bg-blue-600');
+        } else {
+            progressBar.classList.add('bg-blue-600');
+            progressBar.classList.remove('bg-green-500', 'progress-stripe');
+        }
+
+        if (reactionTimes.length === 0) {
+            arrayDisplay.innerText = "[]";
+        } else {
+            arrayDisplay.innerText = `[${reactionTimes.join(', ')}]`;
+        }
     }
 
     function resetGame() {
@@ -357,67 +406,151 @@
         gameState = 'waiting';
         setGameStyle('waiting');
         updateReactionOutput();
-        outputReaction.value = "data = np.array([])";
+    }
+
+    function copyArrayData(btn) {
+        const textToCopy = arrayDisplay.innerText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+            btn.classList.add('bg-green-600', 'text-white', 'border-green-500');
+            btn.classList.remove('bg-slate-700', 'border-slate-600');
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.classList.remove('bg-green-600', 'text-white', 'border-green-500');
+                btn.classList.add('bg-slate-700', 'border-slate-600');
+            }, 2000);
+        });
     }
 
 
-    // --- TOOL 2: MATRIX BUILDER ---
+    // --- TOOL 2: MATRIX BUILDER (IMPROVED) ---
     const gridSize = 8;
     let matrix = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
     const gridContainer = document.getElementById('pixel-grid');
     const outputMatrix = document.getElementById('output-matrix');
+    
+    // Drawing State
+    let isDrawing = false;
+    let drawMode = 1; // 1 to draw, 0 to erase
 
     function initGrid() {
         gridContainer.innerHTML = '';
         for(let i=0; i<gridSize; i++) {
             for(let j=0; j<gridSize; j++) {
                 const cell = document.createElement('div');
-                // Styling the cell
-                cell.className = "grid-cell w-8 h-8 md:w-10 md:h-10 rounded bg-slate-800 border border-slate-700 cursor-pointer shadow-sm";
+                // Increased size: w-10/h-10 on mobile, w-14/h-14 on desktop
+                cell.className = "grid-cell w-10 h-10 md:w-14 md:h-14 rounded-md bg-slate-800 border border-slate-700 cursor-pointer shadow-sm";
                 cell.dataset.r = i;
                 cell.dataset.c = j;
-                cell.onclick = () => toggleCell(i, j, cell);
+                
+                // Mouse Events
+                cell.addEventListener('mousedown', (e) => startDraw(i, j, e));
+                cell.addEventListener('mouseenter', () => continueDraw(i, j));
+                
                 gridContainer.appendChild(cell);
             }
         }
+        
+        // Global mouse up to stop drawing
+        document.addEventListener('mouseup', () => { isDrawing = false; });
+        
+        // Touch Events (for mobile drag)
+        gridContainer.addEventListener('touchstart', handleTouchStart, {passive: false});
+        gridContainer.addEventListener('touchmove', handleTouchMove, {passive: false});
+        gridContainer.addEventListener('touchend', () => { isDrawing = false; });
+
+        renderGrid();
         updateMatrixOutput();
     }
 
-    function toggleCell(r, c, el) {
-        const val = matrix[r][c] === 0 ? 1 : 0;
-        matrix[r][c] = val;
+    function startDraw(r, c, e) {
+        if(e) e.preventDefault();
+        isDrawing = true;
+        // Determine mode: if clicking on empty, draw. If clicking on filled, erase.
+        drawMode = matrix[r][c] === 0 ? 1 : 0;
+        updateCell(r, c);
+    }
+
+    function continueDraw(r, c) {
+        if (isDrawing) {
+            updateCell(r, c);
+        }
+    }
+
+    function updateCell(r, c) {
+        if (matrix[r][c] !== drawMode) {
+            matrix[r][c] = drawMode;
+            renderCell(r, c);
+            updateMatrixOutput();
+        }
+    }
+
+    // Handle Touch Logic
+    function handleTouchStart(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (target && target.classList.contains('grid-cell')) {
+            const r = parseInt(target.dataset.r);
+            const c = parseInt(target.dataset.c);
+            startDraw(r, c, null);
+        }
+    }
+
+    function handleTouchMove(e) {
+        e.preventDefault();
+        if (!isDrawing) return;
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (target && target.classList.contains('grid-cell')) {
+            const r = parseInt(target.dataset.r);
+            const c = parseInt(target.dataset.c);
+            updateCell(r, c);
+        }
+    }
+
+    function renderCell(r, c) {
+        const index = r * gridSize + c;
+        const cell = gridContainer.children[index];
+        const val = matrix[r][c];
         
         if (val === 1) {
-            el.classList.remove('bg-slate-800', 'border-slate-700');
-            el.classList.add('bg-blue-500', 'border-blue-400', 'shadow-[0_0_10px_rgba(59,130,246,0.6)]');
+            cell.classList.remove('bg-slate-800', 'border-slate-700');
+            cell.classList.add('bg-blue-500', 'border-blue-400', 'shadow-[0_0_15px_rgba(59,130,246,0.6)]', 'scale-105');
         } else {
-            el.classList.add('bg-slate-800', 'border-slate-700');
-            el.classList.remove('bg-blue-500', 'border-blue-400', 'shadow-[0_0_10px_rgba(59,130,246,0.6)]');
+            cell.classList.add('bg-slate-800', 'border-slate-700');
+            cell.classList.remove('bg-blue-500', 'border-blue-400', 'shadow-[0_0_15px_rgba(59,130,246,0.6)]', 'scale-105');
         }
-        updateMatrixOutput();
+    }
+
+    function renderGrid() {
+        for(let i=0; i<gridSize; i++) {
+            for(let j=0; j<gridSize; j++) {
+                renderCell(i, j);
+            }
+        }
     }
 
     function updateMatrixOutput() {
-        let code = "# Matrix Representation of Initial\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nmy_initial = np.array([\n";
-        matrix.forEach(row => {
-            code += "    [" + row.join(", ") + "],\n";
+        // Simplified Output: Just the list of lists
+        let code = "[\n";
+        matrix.forEach((row, idx) => {
+            code += "  [" + row.join(", ") + "]" + (idx < gridSize-1 ? "," : "") + "\n";
         });
-        code += "])\n\n# Visualize\nplt.imshow(my_initial, cmap='Greys')\nplt.show()";
+        code += "]";
         outputMatrix.value = code;
     }
 
     function clearGrid() {
         matrix = matrix.map(row => row.fill(0));
-        initGrid(); // Re-render is easiest
+        renderGrid();
+        updateMatrixOutput();
     }
 
     function fillGrid() {
         matrix = matrix.map(row => row.fill(1));
-        // Manually update UI to avoid full re-render flicker if desired, but initGrid is fast enough
-        Array.from(gridContainer.children).forEach(cell => {
-             cell.classList.remove('bg-slate-800', 'border-slate-700');
-             cell.classList.add('bg-blue-500', 'border-blue-400', 'shadow-[0_0_10px_rgba(59,130,246,0.6)]');
-        });
+        renderGrid();
         updateMatrixOutput();
     }
 
@@ -426,24 +559,24 @@
     function copyToClipboard(elementId, btn) {
         const copyText = document.getElementById(elementId);
         copyText.select();
-        copyText.setSelectionRange(0, 99999); // Mobile
+        copyText.setSelectionRange(0, 99999);
         navigator.clipboard.writeText(copyText.value).then(() => {
             const originalHTML = btn.innerHTML;
+            const originalClasses = btn.className;
+            
             btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-            btn.classList.add('bg-green-600', 'text-white');
-            btn.classList.remove('bg-slate-700');
+            btn.className = "w-full py-3 bg-green-600 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2";
             
             setTimeout(() => {
                 btn.innerHTML = originalHTML;
-                btn.classList.remove('bg-green-600', 'text-white');
-                btn.classList.add('bg-slate-700');
+                btn.className = originalClasses;
             }, 2000);
         });
     }
 
     // Initialize
     initGrid();
-    updateReactionOutput(); // Set initial text
+    updateReactionOutput();
 
   </script>
 </body>
