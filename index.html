@@ -100,25 +100,29 @@
         <i class="fa-solid fa-chevron-down text-xs opacity-70"></i>
       </a>
 
-      <div
-        class="absolute left-0 top-full mt-3 w-64 rounded-xl border border-white/10 bg-slate-900/80 backdrop-blur-xl shadow-xl
-              opacity-0 translate-y-1 pointer-events-none
-              group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto
-              group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto"
-      >
-        <div class="py-2">
-          <a href="/projects/" class="block px-4 py-2 text-sm text-slate-200 hover:bg-white/5 hover:text-blue-300">
-            All Projects
-          </a>
-          <div class="my-1 border-t border-white/10"></div>
+      <!-- 过渡区：pt-3 是“安全走廊”，鼠标下移不会断 hover -->
+      <div class="absolute left-0 top-full w-64 pt-3 z-50">
+        <!-- 真正的面板：在这里做显示/隐藏 -->
+        <div
+          class="rounded-xl border border-white/10 bg-slate-900/80 backdrop-blur-xl shadow-xl
+                opacity-0 translate-y-1 pointer-events-none
+                transition duration-150 ease-out
+                group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto
+                group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto"
+        >
+          <div class="py-2">
+            <a href="/projects/" class="block px-4 py-2 text-sm text-slate-200 hover:bg-white/5 hover:text-blue-300">
+              All Projects
+            </a>
+            <div class="my-1 border-t border-white/10"></div>
 
-          <!-- 这些按你的实际页面添加/修改 -->
-          <a href="/projects/project-ta/" class="block px-4 py-2 text-sm text-slate-200 hover:bg-white/5 hover:text-blue-300">
-            Project A
-          </a>
-
+            <a href="/projects/project-ta/" class="block px-4 py-2 text-sm text-slate-200 hover:bg-white/5 hover:text-blue-300">
+              Project A
+            </a>
+          </div>
         </div>
       </div>
+    </div>
     </div>
       <a href="./blog.html" class="nav-link">Blog</a>
       <a href="./about.html" class="nav-link">About</a>
