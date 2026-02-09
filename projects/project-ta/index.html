@@ -111,7 +111,7 @@
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 pb-6 print:hidden">
         <div>
           <h1 id="page-title" class="text-3xl md:text-4xl font-extrabold text-slate-800">Reaction Timer</h1>
-          <p id="page-desc" class="text-slate-500 mt-2 text-sm">Collect reaction data for your statistical analysis assignment.</p>
+          <p id="page-desc" class="text-slate-500 mt-2 text-sm">Collect reaction data for your report.</p>
         </div>
         
         <!-- Mobile Tab Switcher -->
@@ -230,7 +230,7 @@
                 </div>
 
                 <div class="flex gap-3 mb-4 justify-center">
-                    <input type="text" id="studentId" placeholder="Last 4 digits (e.g. 1234)" maxlength="8" class="px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none w-48 text-center text-lg font-mono transition-colors">
+                    <input type="text" id="studentId" placeholder="Last 4 digits (e.g. 1234)" maxlength="8" class="px-4 py-2 border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:outline-none w-48 text-center text-base font-mono transition-colors">
                     <button onclick="initMaze()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 shadow-sm active:transform active:scale-95">
                         <i class="fa-solid fa-play"></i> Generate
                     </button>
@@ -266,7 +266,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 text-slate-600 mt-6">
                     <div class="space-y-2">
                         <p class="font-bold text-xl text-slate-800">Individual Report</p>
-                        <p class="text-sm text-slate-600"><span class="font-semibold text-slate-900">Due date:</span> 13 Feb 2026, 23:59</p>
+                        <p class="text-sm text-slate-600"><span class="font-semibold text-slate-900">Due date:</span> 15 Feb 2026, 23:59</p>
                         <p class="text-sm text-slate-600"><span class="font-semibold text-slate-900">Include:</span> Code, figures, Screenshot</p>
                     </div>
                     
@@ -471,7 +471,7 @@
 
   <!-- Footer -->
   <footer class="relative z-10 py-6 text-center text-slate-400 text-xs print:hidden">
-    <p>Python Control Systems Course &copy; 2026</p>
+    <p>ME31002 Linear Systems &copy; 2026</p>
   </footer>
 
   <script>
@@ -553,7 +553,7 @@
         const desc = document.getElementById('page-desc');
         
         // Mobile Nav Active State
-        const btns = ['reaction', 'matrix', 'report'];
+        const btns = ['reaction', 'matrix', 'maze', 'report'];
         btns.forEach(b => {
             const btn = document.getElementById(`mob-tab-${b}`);
             if (b === tabName) {
@@ -566,7 +566,7 @@
         // Title Updates
         if (tabName === 'reaction') {
             title.innerText = 'Reaction Timer';
-            desc.innerText = 'Collect reaction data for your statistical analysis assignment.';
+            desc.innerText = 'Collect reaction data for your report.';
         } else if (tabName === 'matrix') {
             title.innerText = 'Matrix Builder';
             desc.innerText = 'Draw your initial to generate a binary matrix.';
@@ -586,7 +586,7 @@
 
     // --- TOOL 1: REACTION GAME ---
     let gameState = 'waiting';
-    let startTime, timeoutId;
+    let startTime, timeoutId, earlyTimeoutId;
     let reactionTimes = [];
     const MAX_ATTEMPTS = 10;
     
@@ -600,9 +600,14 @@
 
     function handleGameClick() {
         if (gameState === 'finished') return;
+        if (gameState === 'early') return;
 
         if (gameState === 'waiting') {
             if (reactionTimes.length >= MAX_ATTEMPTS) return;
+            if (earlyTimeoutId) {
+                clearTimeout(earlyTimeoutId);
+                earlyTimeoutId = null;
+            }
             gameState = 'ready';
             setGameStyle('ready');
             const delay = 1500 + Math.random() * 2500;
@@ -614,9 +619,12 @@
 
         } else if (gameState === 'ready') {
             clearTimeout(timeoutId);
-            gameState = 'waiting';
+            gameState = 'early';
             setGameStyle('early');
-            setTimeout(() => setGameStyle('waiting'), 1500);
+            earlyTimeoutId = setTimeout(() => {
+                gameState = 'waiting';
+                setGameStyle('waiting');
+            }, 1500);
 
         } else if (gameState === 'green') {
             const time = (Date.now() - startTime) / 1000;
@@ -700,6 +708,10 @@
     function resetGame() {
         reactionTimes = [];
         clearTimeout(timeoutId);
+        if (earlyTimeoutId) {
+            clearTimeout(earlyTimeoutId);
+            earlyTimeoutId = null;
+        }
         gameState = 'waiting';
         setGameStyle('waiting');
         updateReactionOutput();
