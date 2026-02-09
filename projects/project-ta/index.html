@@ -50,6 +50,18 @@
     }
     @keyframes progress-bar-stripes { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }
 
+    /* Disable mouse text selection inside report area */
+    .report-container, .report-container * {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    /* allow form controls & buttons inside report to remain selectable */
+    .report-container button, .report-container input, .report-container textarea {
+        user-select: auto;
+    }
+
     /* --- PRINT STYLES --- */
     @media print {
         body { background: white; color: black; }
@@ -160,12 +172,18 @@
             <div class="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 border border-slate-200 min-h-[500px]">
                 <div class="mb-4 text-center flex flex-col gap-1">
                     <h3 class="text-slate-800 font-bold text-lg">Draw Pattern</h3>
-                    <p class="text-xs text-slate-500">Click & Drag to draw. <br class="md:hidden">Click filled cells to erase.</p>
+                    <p class="text-xs text-slate-500">Select a color on the left (or top on mobile) and Click & Drag to draw. <br class="md:hidden">Click a cell with the selected color to erase.</p>
+                </div>
+
+                <!-- Color Palette -->
+                <div class="mb-4 w-full flex items-center gap-3">
+                    <div id="color-palette" class="flex gap-2 flex-wrap"></div>
+                    <div class="ml-auto text-xs text-slate-500">Selected: <span id="color-selected" class="inline-block w-5 h-5 align-middle rounded-sm border border-slate-300"></span></div>
                 </div>
                 
                 <!-- The Grid Container -->
-                <div class="relative p-3 bg-white rounded-xl shadow-lg border border-slate-200">
-                    <div id="pixel-grid" class="grid grid-cols-8 gap-1.5 touch-none"></div>
+                <div class="relative p-3 bg-white rounded-xl shadow-lg border border-slate-200 w-full max-w-[420px]">
+                    <div id="pixel-grid" class="grid gap-1.5 touch-none w-full"></div>
                 </div>
                 
                 <div class="mt-8 flex gap-4 w-full max-w-xs justify-center">
@@ -179,15 +197,15 @@
             </div>
 
             <!-- Code Output -->
-            <div class="lg:w-1/3 flex flex-col gap-4">
-                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 h-full flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
+            <div class="lg:w-72 flex flex-col gap-4">
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-3">
                         <label class="text-sm font-bold text-blue-600 uppercase tracking-wider">Result Matrix</label>
-                        <span class="text-xs text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded">8x8</span>
+                        <span id="matrix-dim" class="text-xs text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded">12x12</span>
                     </div>
                     
-                    <div class="relative flex-grow mb-4">
-                        <textarea id="output-matrix" readonly class="w-full h-full bg-white border border-slate-200 rounded-xl p-4 font-mono text-xs text-slate-600 focus:outline-none focus:border-blue-500 resize-none leading-relaxed tracking-wide shadow-inner"></textarea>
+                    <div class="relative flex-grow mb-3">
+                        <textarea id="output-matrix" readonly class="w-full h-56 md:h-64 bg-white border border-slate-200 rounded-xl p-3 font-mono text-[10px] text-slate-600 focus:outline-none focus:border-blue-500 resize-auto leading-tight tracking-wide shadow-inner overflow-auto"></textarea>
                     </div>
 
                     <button onclick="copyToClipboard('output-matrix', this)" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 group">
@@ -201,12 +219,6 @@
 
       <!-- TAB 3: Lab Report (FIXED INTEGRATION) -->
       <div id="tab-report" class="tab-content">
-        <!-- 
-           修复说明：
-           1. 移除了 'h-full', 'overflow-y-auto', 'bg-white', 'p-6' 等样式。
-           2. 让内容直接继承外层卡片的样式，避免双重内边距和嵌套滚动条。
-           3. 这样页面会自然伸长，利用浏览器原生滚动条，体验更好。
-        -->
         <div class="report-container max-w-4xl mx-auto">
             
             <!-- Report Header -->
@@ -321,19 +333,20 @@
 
                 <!-- Problem 2 -->
                 <section>
-                    <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">Problem 2: Matrix Transformations</h2>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">Problem 2: Matrix Transformations & Image Representation</h2>
                     <p class="mb-6">
-                        <strong class="text-slate-900">Context:</strong> In Control Systems and Computer Vision, matrices often represent 2D maps or images. You will manipulate your "Pixel Art" matrix to understand how matrix operations affect spatial data.
+                        <strong class="text-slate-900">Context:</strong> In digital image processing, images are often stored as matrices where each number represents a color or intensity. You will manipulate your "Pixel Art" matrix (where values 0-8 represent different colors) to understand how matrix operations affect spatial data.
                     </p>
 
                     <!-- Sub-section 2.1 -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.1</span> Matrix Initialization
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.1</span> Data Initialization
                         </h3>
                         <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
-                            <li>Define your \(8\times8\) matrix in Python as a NumPy array named <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code>.</li>
-                            <li>Print the matrix and its shape.</li>
+                            <li>Define your <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">12&amp;times;12</code> matrix in Python as a NumPy array named <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code>.</li>
+                            <li>The matrix should contain integers from <strong>0 to 8</strong> (0 represents empty space/background, 1-8 represent different colors/layers).</li>
+                            <li>Print the matrix and its shape to confirm it is <code class="bg-slate-100 font-mono text-xs px-1 py-0.5 rounded">(12, 12)</code>.</li>
                         </ul>
                     </div>
 
@@ -345,16 +358,18 @@
                         <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
                             <li>Create a new matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code> which is the <strong>transpose</strong> of <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code>.</li>
                             <li>Print <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code>.</li>
+                            <li class="mt-2 text-sm text-slate-500 italic">Concept Check: Does transposing the matrix change the color values (the numbers themselves) or just their positions?</li>
                         </ul>
                     </div>
 
                     <!-- Sub-section 2.3 -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.3</span> Operation B: Slicing (Zooming)
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.3</span> Operation B: Slicing (Cropping)
                         </h3>
                         <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
-                            <li>Create a new matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_zoom</code> that consists only of the <strong>central \(4\times4\) area</strong> of your original matrix.</li>
+                            <li>Create a new matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_zoom</code> that consists only of the <strong>central 6&amp;times;6 area</strong> of your original matrix.</li>
+                            <li class="text-sm text-slate-500 italic">Hint: If your matrix is 12&amp;times;12, the center rows are indices <code class="font-mono text-xs">3:9</code> and columns are <code class="font-mono text-xs">3:9</code> (slice end is exclusive).</li>
                             <li>Print <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_zoom</code>.</li>
                         </ul>
                     </div>
@@ -363,36 +378,29 @@
                         <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
                             <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.4</span> Visual Analysis (Spatial Mapping)
                         </h3>
-                        <ul class="list-decimal pl-6 space-y-4 marker:text-slate-500 marker:font-semibold">
+                        <ul class="list-disc pl-6 space-y-3 marker:text-slate-400">
                             <li>
-                                <strong>Visualize the original matrix</strong> <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code> as a 2D image or heatmap.
-                                <p class="mt-1 text-sm text-slate-500 italic">Hint: Use <code class="text-xs">plt.imshow(M_art, cmap='Blues')</code> to see the spatial distribution of your 0s and 1s.</p>
+                                <strong>Visualize the original matrix</strong> <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code> using <code class="text-xs">plt.imshow</code>.
+                                <p class="mt-1 text-sm text-slate-500 italic">Hint: Use <code class="text-xs">plt.imshow(M_art, cmap='tab10', vmin=0, vmax=9)</code> to clearly distinguish the different numbers as colors.</p>
                             </li>
                             <li>
-                                <strong>Visualize the transposed matrix</strong> <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code> in a separate figure to observe the transformation.
+                                <strong>Visualize the transposed matrix</strong> <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code> in a separate figure.
                             </li>
-                            <li>
-                                <strong>Compare the two images.</strong>
-                                <div class="mt-2 ml-4 p-3 bg-indigo-50 rounded border border-indigo-100 text-indigo-900 text-sm">
-                                    <strong>Question:</strong> How did the Transpose operation change the orientation of your art? (e.g., Did horizontal lines become vertical? Is the image reflected across the diagonal?)
-                                </div>
-                            </li>
+                            <li class="text-sm text-slate-500 italic">Analysis: Compare the two images. How did the Transpose operation change the orientation of your art? (e.g., Did the image rotate 90 degrees, or did it flip across the diagonal?)</li>
                         </ul>
                     </div>
 
                     <!-- Sub-section 2.5 -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.5</span> 3D Voxel Visualization
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.5</span> 3D Topography Visualization
                         </h3>
                         <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
                             <li>
-                                Use 3D plotting (<code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">projection='3d'</code>) to create a <strong>3D Bar Chart (Voxel Map)</strong> where each '1' in your matrix is represented by a solid block.
-                                <p class="mt-1 text-sm text-slate-500 italic">Hint: <code class="text-xs">ax.bar3d</code> works better than a smooth surface for binary (0/1) data.</p>
+                                Use 3D plotting (<code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">projection='3d'</code>) to create a <strong>3D Bar Chart (Voxel Map)</strong> where each pixel value (0-8) determines the <strong>height</strong> of the bar.
+                                <p class="mt-1 text-sm text-slate-500 italic">Logic: Higher numbers (e.g., 8) should result in taller bars, creating a "terrain" or "cityscape" effect. <code class="text-xs">ax.bar3d</code> is a good choice for discrete heights.</p>
                             </li>
-                            <li>
-                                <strong>Analysis:</strong> Does this "3D relief" accurately represent the structure of your pixel art? How does the added Z-height help in distinguishing the pattern from the background?
-                            </li>
+                            <li class="text-sm text-slate-500 italic">Analysis: How does mapping the color value to the Z-axis (height) change your perception of the data compared to the flat 2D image?</li>
                         </ul>
                     </div>
                 </section>
@@ -597,7 +605,7 @@
             gameArea.classList.add('bg-slate-100', 'border-red-400');
             gameStatus.innerText = "Too Early!";
             gameStatus.className = "text-3xl md:text-5xl font-bold text-red-500 text-center";
-            gameSub.innerText = "Click to try again.";
+            gameSub.innerText = "Wait and try again.";
             gameIcon.className = "fa-solid fa-triangle-exclamation text-5xl md:text-6xl mb-6 text-red-500";
         } else if (state === 'success') {
             gameArea.classList.add('bg-slate-50', 'border-emerald-300');
@@ -661,25 +669,72 @@
 
 
     // --- TOOL 2: MATRIX BUILDER ---
-    const gridSize = 8;
-    let matrix = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
+    const gridSize = 12;
+    let matrix = Array.from({length: gridSize}, () => Array(gridSize).fill(0));
     const gridContainer = document.getElementById('pixel-grid');
     const outputMatrix = document.getElementById('output-matrix');
-    
+
+    // Palette: index 0 = blank/eraser, 1-8 = colors
+    const COLORS = [
+        {name: 'Blank', color:'#e6e9ee'},
+        {name: 'Red', color:'#ef4444'},
+        {name: 'Orange', color:'#fb923c'},
+        {name: 'Amber', color:'#f59e0b'},
+        {name: 'Lime', color:'#84cc16'},
+        {name: 'Teal', color:'#14b8a6'},
+        {name: 'Sky', color:'#0ea5e9'},
+        {name: 'Indigo', color:'#6366f1'},
+        {name: 'Pink', color:'#ec4899'}
+    ];
+    let currentColor = 1;
     let isDrawing = false;
-    let drawMode = 1; 
+    let drawMode = 1;
 
     function initGrid() {
+        // Update matrix size label
+        const dimLabel = document.getElementById('matrix-dim');
+        if (dimLabel) dimLabel.innerText = `${gridSize}x${gridSize}`;
+
+        // Build palette
+        const paletteContainer = document.getElementById('color-palette');
+        paletteContainer.innerHTML = '';
+
+        // Eraser / Blank button (value 0)
+        const eraser = document.createElement('button');
+        eraser.className = 'w-8 h-8 rounded-sm border border-slate-300 bg-white flex items-center justify-center text-slate-500 shadow-sm';
+        eraser.title = 'Eraser';
+        eraser.innerHTML = '<i class="fa-solid fa-eraser"></i>';
+        eraser.dataset.color = 0;
+        eraser.addEventListener('click', () => selectColor(0));
+        paletteContainer.appendChild(eraser);
+
+        COLORS.forEach((c, idx) => {
+            if(idx === 0) return; // skip blank since we have eraser
+            const btn = document.createElement('button');
+            btn.className = 'w-8 h-8 rounded-sm border border-slate-300 shadow-sm';
+            btn.style.background = c.color;
+            btn.dataset.color = idx;
+            btn.title = c.name;
+            btn.addEventListener('click', () => selectColor(idx));
+            paletteContainer.appendChild(btn);
+        });
+
+        // Create grid cells
         gridContainer.innerHTML = '';
+        // Use dynamic columns so it works for any gridSize
+        gridContainer.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
         for(let i=0; i<gridSize; i++) {
             for(let j=0; j<gridSize; j++) {
                 const cell = document.createElement('div');
-                cell.className = "grid-cell w-10 h-10 md:w-14 md:h-14 rounded-md bg-slate-200 border border-slate-300 cursor-pointer shadow-sm";
+                cell.className = "grid-cell rounded-md bg-slate-200 border border-slate-300 cursor-pointer shadow-sm";
+                cell.style.aspectRatio = '1 / 1';
                 cell.dataset.r = i;
                 cell.dataset.c = j;
                 
                 cell.addEventListener('mousedown', (e) => startDraw(i, j, e));
                 cell.addEventListener('mouseenter', () => continueDraw(i, j));
+                // REMOVED CLICK LISTENER HERE TO FIX DOUBLE-TOGGLE BUG
                 
                 gridContainer.appendChild(cell);
             }
@@ -692,12 +747,23 @@
 
         renderGrid();
         updateMatrixOutput();
+        selectColor(currentColor);
+    }
+
+    function selectColor(idx) {
+        currentColor = idx;
+        document.querySelectorAll('#color-palette button').forEach(b => b.classList.remove('ring','ring-2','ring-blue-500'));
+        const btn = document.querySelector(`#color-palette button[data-color="${idx}"]`);
+        if(btn) btn.classList.add('ring','ring-2','ring-blue-500');
+        const sel = document.getElementById('color-selected');
+        sel.style.background = COLORS[idx] ? COLORS[idx].color : '#ffffff';
+        sel.style.borderColor = '#cbd5e1';
     }
 
     function startDraw(r, c, e) {
         if(e) e.preventDefault();
         isDrawing = true;
-        drawMode = matrix[r][c] === 0 ? 1 : 0;
+        drawMode = matrix[r][c] === currentColor ? 0 : currentColor;
         updateCell(r, c);
     }
 
@@ -741,14 +807,16 @@
     function renderCell(r, c) {
         const index = r * gridSize + c;
         const cell = gridContainer.children[index];
-        const val = matrix[r][c];
+        const val = matrix[r][c] || 0;
         
-        if (val === 1) {
-            cell.classList.remove('bg-slate-200', 'border-slate-300');
-            cell.classList.add('bg-blue-500', 'border-blue-600', 'shadow-md', 'scale-105');
+        if (val > 0) {
+            cell.style.background = COLORS[val].color;
+            cell.style.borderColor = shadeColor(COLORS[val].color, -20);
+            cell.classList.add('shadow-md', 'scale-105');
         } else {
-            cell.classList.add('bg-slate-200', 'border-slate-300');
-            cell.classList.remove('bg-blue-500', 'border-blue-600', 'shadow-md', 'scale-105');
+            cell.style.background = '#e6e9ee';
+            cell.style.borderColor = '#e2e8f0';
+            cell.classList.remove('shadow-md', 'scale-105');
         }
     }
 
@@ -776,9 +844,20 @@
     }
 
     function fillGrid() {
-        matrix = matrix.map(row => row.fill(1));
+        const fillVal = currentColor > 0 ? currentColor : 1;
+        matrix = matrix.map(row => row.fill(fillVal));
         renderGrid();
         updateMatrixOutput();
+    }
+
+    // small helper to darken border
+    function shadeColor(hex, percent) {
+        const f=parseInt(hex.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent;
+        const R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+        const newR = Math.round((t-R)*p/100)+R;
+        const newG = Math.round((t-G)*p/100)+G;
+        const newB = Math.round((t-B)*p/100)+B;
+        return "#" + (0x1000000 + (newR<<16) + (newG<<8) + newB).toString(16).slice(1);
     }
 
 
@@ -800,6 +879,13 @@
             }, 2000);
         });
     }
+
+    // Disable selection start inside report area (JS fallback)
+    document.addEventListener('selectstart', function(e){
+        if (e.target && e.target.closest && e.target.closest('.report-container')) {
+            e.preventDefault();
+        }
+    });
 
     // Initialize
     initGrid();
