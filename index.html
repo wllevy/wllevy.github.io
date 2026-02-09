@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Personal Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #ffffff;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #canvas-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+
+    nav {
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      background: rgba(15, 23, 42, 0.6);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-link {
+      position: relative;
+      color: #94a3b8;
+      transition: color 0.3s ease;
+      text-decoration: none;
+    }
+    .nav-link:hover { color: #60a5fa; }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      bottom: -4px;
+      left: 0;
+      background-color: #60a5fa;
+      transition: width 0.3s ease;
+    }
+    .nav-link:hover::after { width: 100%; }
+
+    .content-card {
+      z-index: 10;
+      background: rgba(30, 41, 59, 0.3);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+      animation: floatUp 1s ease-out forwards;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    @keyframes floatUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #60a5fa, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .social-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 15px rgba(96, 165, 250, 0.5);
+    }
+  </style>
+</head>
+
+<body class="h-screen w-screen relative flex flex-col">
+  <canvas id="canvas-container"></canvas>
+
+  <nav class="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center">
+    <div class="text-xl font-bold tracking-wider text-white flex items-center gap-2">
+      <i class="fa-solid fa-code text-blue-400"></i>
+      <span>MY<span class="text-blue-400">PAGE</span></span>
+    </div>
+
+    <div class="hidden md:flex gap-8 text-sm font-medium">
+      <a href="#" class="nav-link">Home</a>
+      <a href="./projects.html" class="nav-link">Projects</a>
+      <a href="./blog.html" class="nav-link">Blog</a>
+      <a href="./about.html" class="nav-link">About</a>
+    </div>
+
+    <div class="md:hidden text-gray-300 cursor-pointer">
+      <i class="fa-solid fa-bars text-xl"></i>
+    </div>
+  </nav>
+
+  <div class="flex-grow flex items-center justify-center p-4 relative z-10">
+    <main class="content-card p-8 md:p-12 rounded-3xl max-w-lg w-full text-center">
+      <div class="relative w-24 h-24 mx-auto mb-6 rounded-full p-1 bg-gradient-to-tr from-blue-400 to-purple-500">
+        <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
+          <i class="fa-solid fa-user-astronaut text-4xl text-gray-300"></i>
+        </div>
+      </div>
+
+      <h1 class="text-3xl md:text-5xl font-extrabold mb-3 tracking-tight">
+        Hello, <span class="gradient-text">World</span>
+      </h1>
+      <p class="text-blue-200 text-sm md:text-base font-medium mb-6 tracking-wide uppercase opacity-80">
+        Explore / Create / Document
+      </p>
+
+      <p class="text-gray-300 mb-8 leading-relaxed text-sm md:text-base">
+        Hi.
+      </p>
+
+      <div class="flex justify-center gap-5">
+        <a href="https://github.com/yourusername" target="_blank"
+           class="social-btn w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 border border-slate-600 text-white transition-all duration-300">
+          <i class="fab fa-github text-xl"></i>
+        </a>
+        <a href="mailto:email@example.com"
+           class="social-btn w-11 h-11 flex items-center justify-center rounded-full bg-slate-800 border border-slate-600 text-white transition-all duration-300">
+          <i class="fa-solid fa-envelope text-xl"></i>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas-container');
+    const ctx = canvas.getContext('2d', { alpha: true });
+
+    let particlesArray = [];
+    let cw = 0, ch = 0;
+    let dpr = 1;
+
+    const mouse = {
+      x: null,
+      y: null,
+      radius: 180
+    };
+
+    const settings = {
+      densityDivisor: 9000,
+
+      baseSpeed: 0.35,
+
+      // 原来 0.985 衰减太快，会“越跑越慢直到停”
+      damping: 0.997,
+
+      attractStrength: 0.22,
+      repelStrength: 0.45,
+      minDist: 28,
+
+      maxSpeed: 2.4,
+
+      // 新增：低频“风场/噪声”驱动，保证无鼠标时也持续缓慢游动
+      wanderStrength: 0.01,   // 越大越“飘”
+      wanderFrequency: 0.0002 // 越小变化越慢（单位：每毫秒的角速度系数）
+    };
+
+    function resizeCanvas() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      cw = window.innerWidth;
+      ch = window.innerHeight;
+
+      canvas.style.width = cw + 'px';
+      canvas.style.height = ch + 'px';
+      canvas.width = Math.floor(cw * dpr);
+      canvas.height = Math.floor(ch * dpr);
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      mouse.radius = Math.max(120, Math.min(cw, ch) * 0.22);
+    }
+
+    window.addEventListener('pointermove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    window.addEventListener('pointerleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    class Particle {
+      constructor(x, y, vx, vy, size, color) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.size = size;
+        this.color = color;
+
+        // 给每个粒子一个独立“噪声相位”，保证运动无规则且不抖（连续变化）
+        this.seed = Math.random() * 1000;
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+
+      update(dt, now) {
+        const t = Math.min(2, dt / 16.67);
+
+        // 边界反弹
+        if (this.x > cw - this.size) { this.x = cw - this.size; this.vx *= -1; }
+        if (this.x < this.size)      { this.x = this.size;      this.vx *= -1; }
+        if (this.y > ch - this.size) { this.y = ch - this.size; this.vy *= -1; }
+        if (this.y < this.size)      { this.y = this.size;      this.vy *= -1; }
+
+        let ax = 0, ay = 0;
+
+        // 1) 持续的“无规则缓慢运动”（低频正弦风场，连续且不抖）
+        const f = settings.wanderFrequency;
+        const w = settings.wanderStrength;
+        ax += Math.sin(this.seed + now * f) * w;
+        ay += Math.cos(this.seed * 1.37 + now * f * 1.12) * w;
+
+        // 2) 鼠标交互：吸引 + 近距离排斥（保持你现在的稳定手感）
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const dist = Math.sqrt(dx * dx + dy * dy) || 0.0001;
+
+          if (dist < mouse.radius) {
+            const ux = dx / dist;
+            const uy = dy / dist;
+
+            const influence = 1 - (dist / mouse.radius);
+            const smooth = influence * influence;
+
+            if (dist > settings.minDist) {
+              const pull = smooth * settings.attractStrength;
+              ax += ux * pull;
+              ay += uy * pull;
+            }
+
+            if (dist < settings.minDist) {
+              const push = (1 - dist / settings.minDist) * settings.repelStrength;
+              ax -= ux * push;
+              ay -= uy * push;
+            }
+          }
+        }
+
+        // 速度更新 + 阻尼
+        this.vx = (this.vx + ax * t) * Math.pow(settings.damping, t);
+        this.vy = (this.vy + ay * t) * Math.pow(settings.damping, t);
+
+        // 限速
+        const sp = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if (sp > settings.maxSpeed) {
+          const s = settings.maxSpeed / (sp || 1);
+          this.vx *= s;
+          this.vy *= s;
+        }
+
+        this.x += this.vx * t;
+        this.y += this.vy * t;
+
+        this.draw();
+      }
+    }
+
+    function init() {
+      particlesArray = [];
+      const numberOfParticles = Math.floor((cw * ch) / settings.densityDivisor);
+
+      for (let i = 0; i < numberOfParticles; i++) {
+        const size = (Math.random() * 2) + 1;
+        const x = Math.random() * (cw - size * 2) + size;
+        const y = Math.random() * (ch - size * 2) + size;
+
+        const vx = (Math.random() * settings.baseSpeed * 2) - settings.baseSpeed;
+        const vy = (Math.random() * settings.baseSpeed * 2) - settings.baseSpeed;
+
+        particlesArray.push(new Particle(x, y, vx, vy, size, '#8b5cf6'));
+      }
+    }
+
+    function connect() {
+      for (let a = 0; a < particlesArray.length; a++) {
+        for (let b = a + 1; b < particlesArray.length; b++) {
+          const dx = particlesArray[a].x - particlesArray[b].x;
+          const dy = particlesArray[a].y - particlesArray[b].y;
+          const dist2 = dx * dx + dy * dy;
+
+          const maxDist2 = (cw / 7) * (ch / 7);
+
+          if (dist2 < maxDist2) {
+            let opacity = 1 - (dist2 / 20000);
+            if (opacity < 0) opacity = 0;
+            if (opacity > 1) opacity = 1;
+
+            ctx.strokeStyle = `rgba(139, 92, 246, ${opacity})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+            ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+            ctx.stroke();
+          }
+        }
+      }
+    }
+
+    let lastTime = performance.now();
+    function animate(now) {
+      const dt = now - lastTime;
+      lastTime = now;
+
+      requestAnimationFrame(animate);
+      ctx.clearRect(0, 0, cw, ch);
+
+      for (let i = 0; i < particlesArray.length; i++) {
+        particlesArray[i].update(dt, now);
+      }
+      connect();
+    }
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      init();
+    });
+
+    resizeCanvas();
+    init();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
