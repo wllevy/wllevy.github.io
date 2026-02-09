@@ -3,54 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Python Data Collector</title>
+  <title>Python Data Collector & Lab Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- MathJax for rendering LaTeX -->
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
   <style>
-    body { margin:0; overflow-x:hidden; background:#0f172a; color:#fff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; user-select: none; }
-    #canvas-container { position:fixed; inset:0; z-index:0; pointer-events: none;}
-    nav { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background: rgba(15, 23, 42, 0.6); border-bottom: 1px solid rgba(255,255,255,0.05); }
+    /* Light Theme Base */
+    body { margin:0; overflow-x:hidden; background:#f8fafc; color:#1e293b; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; }
     
-    /* Glassmorphism Card */
+    #canvas-container { position:fixed; inset:0; z-index:0; pointer-events: none;}
+    
+    /* Light Glass Navbar */
+    nav { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.8); border-bottom: 1px solid rgba(0,0,0,0.05); }
+    
+    /* Light Glass Card */
     .content-card { 
         z-index:10; 
-        background: rgba(30, 41, 59, 0.4); 
+        background: rgba(255, 255, 255, 0.95); 
         backdrop-filter: blur(20px); 
         -webkit-backdrop-filter: blur(20px); 
-        border: 1px solid rgba(255,255,255,0.1); 
-        box-shadow: 0 0 40px rgba(0,0,0,0.4); 
+        border: 1px solid rgba(255,255,255,0.6); 
+        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1); 
     }
 
-    .nav-link { position:relative; color:#94a3b8; text-decoration:none; transition:color .2s; cursor: pointer;}
-    .nav-link:hover { color:#60a5fa; }
-    .nav-link::after { content:''; position:absolute; left:0; bottom:-4px; width:0; height:2px; background:#60a5fa; transition: width .2s; }
-    .nav-link:hover::after { width:100%; }
-
-    /* Custom Scrollbar */
-    textarea::-webkit-scrollbar, div::-webkit-scrollbar { width: 8px; height: 8px; }
-    textarea::-webkit-scrollbar-track, div::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
-    textarea::-webkit-scrollbar-thumb, div::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-    textarea::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+    /* Navigation Links */
+    .nav-link { position:relative; color:#64748b; text-decoration:none; transition:color .2s; cursor: pointer; font-weight: 600; }
+    .nav-link:hover, .nav-link.active-link { color:#2563eb; }
+    .nav-link::after { content:''; position:absolute; left:0; bottom:-4px; width:0; height:2px; background:#2563eb; transition: width .2s; }
+    .nav-link:hover::after, .nav-link.active-link::after { width:100%; }
 
     /* Grid Cell Animation */
-    .grid-cell { transition: background-color 0.1s ease, border-color 0.1s ease; touch-action: none; }
-    /* Removed hover scale transform to make continuous drawing smoother */
-    .grid-cell:hover { border-color: rgba(96, 165, 250, 0.8); }
+    .grid-cell { transition: background-color 0.1s ease, border-color 0.1s ease, transform 0.1s; touch-action: none; }
     
     /* Tab Animation */
-    .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+    .tab-content { display: none; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
     .tab-content.active { display: block; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* Progress Bar Stripe Animation */
+    /* Progress Bar Stripe */
     .progress-stripe {
         background-image: linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent);
         background-size: 1rem 1rem;
         animation: progress-bar-stripes 1s linear infinite;
     }
-    @keyframes progress-bar-stripes {
-        0% { background-position: 1rem 0; }
-        100% { background-position: 0 0; }
+    @keyframes progress-bar-stripes { 0% { background-position: 1rem 0; } 100% { background-position: 0 0; } }
+
+    /* --- PRINT STYLES --- */
+    @media print {
+        body { background: white; color: black; }
+        #canvas-container, nav, .print\:hidden, footer { display: none !important; }
+        .content-card { 
+            box-shadow: none; border: none; background: white; 
+            width: 100%; max-width: 100%; padding: 0; margin: 0; 
+        }
+        main { padding: 0; margin: 0; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        /* Ensure report text is black for printing */
+        .text-slate-600, .text-slate-700, .text-slate-500 { color: black !important; }
+        /* Hide mobile tabs */
+        .md\:hidden { display: none !important; }
     }
   </style>
 </head>
@@ -58,62 +72,65 @@
   <canvas id="canvas-container"></canvas>
 
   <!-- Navbar -->
-  <nav class="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center">
-    <div class="text-xl font-bold tracking-wider text-white flex items-center gap-3">
-      <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/30">
+  <nav class="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center shadow-sm print:hidden">
+    <div class="text-xl font-bold tracking-wider text-slate-800 flex items-center gap-3">
+      <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20">
         <i class="fa-brands fa-python text-white text-lg"></i>
       </div>
-      <span class="bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">DataLab</span>
+      <span class="bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-500">DataLab</span>
     </div>
 
     <div class="hidden md:flex gap-8 text-sm font-medium">
-      <span onclick="switchTab('reaction')" class="nav-link text-white">Reaction Test</span>
-      <span onclick="switchTab('matrix')" class="nav-link">Matrix Builder</span>
+      <span onclick="switchTab('reaction')" id="nav-reaction" class="nav-link active-link">Reaction Test</span>
+      <span onclick="switchTab('matrix')" id="nav-matrix" class="nav-link">Matrix Builder</span>
+      <span onclick="switchTab('report')" id="nav-report" class="nav-link">Lab Report</span>
     </div>
   </nav>
 
   <!-- Main Content -->
   <main class="relative z-10 pt-28 px-4 pb-10 flex justify-center flex-grow">
-    <div class="content-card w-full max-w-5xl rounded-3xl p-6 md:p-10 flex flex-col min-h-[600px]">
+    <!-- Removed min-h-[600px] to allow natural height for report -->
+    <div class="content-card w-full max-w-5xl rounded-3xl p-6 md:p-10 flex flex-col">
       
-      <!-- Header Area -->
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-700/50 pb-6">
+      <!-- Header Area (Dynamic Title) -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-slate-200 pb-6 print:hidden">
         <div>
-          <h1 id="page-title" class="text-3xl md:text-4xl font-extrabold text-white">Reaction Timer</h1>
-          <p id="page-desc" class="text-slate-400 mt-2 text-sm">Collect reaction data for your statistical analysis assignment.</p>
+          <h1 id="page-title" class="text-3xl md:text-4xl font-extrabold text-slate-800">Reaction Timer</h1>
+          <p id="page-desc" class="text-slate-500 mt-2 text-sm">Collect reaction data for your statistical analysis assignment.</p>
         </div>
         
         <!-- Mobile Tab Switcher -->
-        <div class="flex md:hidden bg-slate-800/50 p-1 rounded-lg mt-4 w-full">
-            <button onclick="switchTab('reaction')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors bg-blue-600 text-white" id="mob-tab-reaction">Timer</button>
-            <button onclick="switchTab('matrix')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors text-slate-400 hover:text-white" id="mob-tab-matrix">Matrix</button>
+        <div class="flex md:hidden bg-slate-100 p-1 rounded-lg mt-4 w-full border border-slate-200">
+            <button onclick="switchTab('reaction')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors bg-white text-blue-600 shadow-sm" id="mob-tab-reaction">Timer</button>
+            <button onclick="switchTab('matrix')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors text-slate-500 hover:text-slate-700" id="mob-tab-matrix">Matrix</button>
+            <button onclick="switchTab('report')" class="flex-1 py-2 text-xs font-bold rounded-md transition-colors text-slate-500 hover:text-slate-700" id="mob-tab-report">Report</button>
         </div>
       </div>
 
       <!-- TAB 1: Reaction Timer -->
-      <div id="tab-reaction" class="tab-content active h-full">
-        <div class="flex flex-col gap-6 h-full">
+      <div id="tab-reaction" class="tab-content active">
+        <div class="flex flex-col gap-6">
             
             <!-- Game Area -->
-            <div id="game-area" onclick="handleGameClick()" class="relative group cursor-pointer w-full h-[350px] md:h-[400px] rounded-2xl bg-slate-800/50 border-2 border-dashed border-slate-600 flex flex-col items-center justify-center transition-all duration-300 hover:border-blue-400 hover:bg-slate-800 overflow-hidden shadow-inner select-none">
-                <i id="game-icon" class="fa-solid fa-bolt text-5xl md:text-6xl mb-6 text-slate-500 transition-all duration-300"></i>
-                <h2 id="game-status" class="text-3xl md:text-5xl font-bold text-slate-300 select-none text-center">Click to Start</h2>
-                <p id="game-sub" class="text-base md:text-lg text-slate-500 mt-3 select-none">Wait for green, then click fast!</p>
-                <div class="absolute inset-0 bg-white/5 opacity-0 transition-opacity duration-100" id="flash-overlay"></div>
+            <div id="game-area" onclick="handleGameClick()" class="relative group cursor-pointer w-full h-[350px] md:h-[400px] rounded-2xl bg-slate-50 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center transition-all duration-300 hover:border-blue-400 hover:bg-white overflow-hidden shadow-inner select-none">
+                <i id="game-icon" class="fa-solid fa-bolt text-5xl md:text-6xl mb-6 text-slate-300 transition-all duration-300"></i>
+                <h2 id="game-status" class="text-3xl md:text-5xl font-bold text-slate-400 select-none text-center">Click to Start</h2>
+                <p id="game-sub" class="text-base md:text-lg text-slate-400 mt-3 select-none">Wait for green, then click fast!</p>
+                <div class="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-100" id="flash-overlay"></div>
             </div>
 
             <!-- Progress Bar Section -->
-            <div class="w-full bg-slate-900/50 rounded-xl p-4 border border-slate-700/50">
+            <div class="w-full bg-slate-50 rounded-xl p-4 border border-slate-200">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="text-xs font-bold text-blue-400 uppercase tracking-wider">Progress</span>
+                    <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Progress</span>
                     <div class="flex gap-4 items-center">
-                        <span class="text-xs text-slate-400"><span id="progress-text" class="text-white font-bold">0</span> / 10 Completed</span>
-                        <button onclick="resetGame()" class="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1.5 px-2 py-1 rounded hover:bg-red-500/10">
+                        <span class="text-xs text-slate-500"><span id="progress-text" class="text-slate-800 font-bold">0</span> / 10 Completed</span>
+                        <button onclick="resetGame()" class="text-xs text-red-500 hover:text-red-600 transition-colors flex items-center gap-1.5 px-2 py-1 rounded hover:bg-red-50">
                             <i class="fa-solid fa-rotate-right"></i> Reset
                         </button>
                     </div>
                 </div>
-                <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                <div class="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
                     <div id="progress-bar" class="h-full bg-blue-600 w-0 transition-all duration-500 ease-out relative"></div>
                 </div>
             </div>
@@ -121,13 +138,13 @@
             <!-- Data Array Output -->
             <div class="flex flex-col">
                 <div class="flex justify-between items-center mb-2">
-                    <label class="text-xs font-bold text-green-400 uppercase tracking-wider">Results Array</label>
-                    <button onclick="copyArrayData(this)" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-md transition-all flex items-center gap-2 border border-slate-600">
+                    <label class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Results Array</label>
+                    <button onclick="copyArrayData(this)" class="text-xs bg-white hover:bg-slate-50 text-slate-600 px-3 py-1.5 rounded-md transition-all flex items-center gap-2 border border-slate-200 shadow-sm">
                         <i class="fa-regular fa-copy"></i> Copy Array
                     </button>
                 </div>
                 <div class="relative w-full">
-                    <div id="array-display" class="w-full bg-slate-950/80 border border-slate-700 rounded-xl p-4 font-mono text-sm text-green-400 overflow-x-auto whitespace-nowrap shadow-inner min-h-[60px] flex items-center">
+                    <div id="array-display" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-4 font-mono text-sm text-emerald-400 overflow-x-auto whitespace-nowrap shadow-inner min-h-[60px] flex items-center">
                         []
                     </div>
                 </div>
@@ -135,51 +152,256 @@
         </div>
       </div>
 
-      <!-- TAB 2: Matrix Builder (IMPROVED) -->
+      <!-- TAB 2: Matrix Builder -->
       <div id="tab-matrix" class="tab-content">
-        <div class="flex flex-col lg:flex-row gap-8 h-full">
+        <div class="flex flex-col lg:flex-row gap-8">
             
-            <!-- Grid Area (Expanded & Interactive) -->
-            <div class="flex-1 flex flex-col items-center justify-center bg-slate-800/30 rounded-2xl p-6 border border-slate-700/50 min-h-[500px]">
+            <!-- Grid Area -->
+            <div class="flex-1 flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-6 border border-slate-200 min-h-[500px]">
                 <div class="mb-4 text-center flex flex-col gap-1">
-                    <h3 class="text-white font-bold text-lg">Draw Pattern</h3>
-                    <p class="text-xs text-slate-400">Click & Drag to draw. <br class="md:hidden">Click filled cells to erase.</p>
+                    <h3 class="text-slate-800 font-bold text-lg">Draw Pattern</h3>
+                    <p class="text-xs text-slate-500">Click & Drag to draw. <br class="md:hidden">Click filled cells to erase.</p>
                 </div>
                 
                 <!-- The Grid Container -->
-                <div class="relative p-3 bg-slate-900 rounded-xl shadow-2xl border border-slate-700">
-                    <!-- Grid generated by JS -->
+                <div class="relative p-3 bg-white rounded-xl shadow-lg border border-slate-200">
                     <div id="pixel-grid" class="grid grid-cols-8 gap-1.5 touch-none"></div>
                 </div>
                 
                 <div class="mt-8 flex gap-4 w-full max-w-xs justify-center">
-                    <button onclick="clearGrid()" class="flex-1 px-4 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition-all shadow-lg border border-slate-600">
-                        <i class="fa-solid fa-trash-can mr-2"></i>Clear
+                    <button onclick="clearGrid()" class="flex-1 px-4 py-2.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition-all shadow-sm border border-slate-200">
+                        <i class="fa-solid fa-trash-can mr-2 text-slate-400"></i>Clear
                     </button>
-                    <button onclick="fillGrid()" class="flex-1 px-4 py-2.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium transition-all shadow-lg border border-slate-600">
-                        <i class="fa-solid fa-fill-drip mr-2"></i>Fill
+                    <button onclick="fillGrid()" class="flex-1 px-4 py-2.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition-all shadow-sm border border-slate-200">
+                        <i class="fa-solid fa-fill-drip mr-2 text-slate-400"></i>Fill
                     </button>
                 </div>
             </div>
 
-            <!-- Code Output (Simplified) -->
+            <!-- Code Output -->
             <div class="lg:w-1/3 flex flex-col gap-4">
-                <div class="bg-slate-900/50 p-5 rounded-2xl border border-slate-700/50 h-full flex flex-col">
+                <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 h-full flex flex-col">
                     <div class="flex justify-between items-center mb-4">
-                        <label class="text-sm font-bold text-blue-400 uppercase tracking-wider">Result Matrix</label>
-                        <span class="text-xs text-slate-500 bg-slate-800 px-2 py-1 rounded">8x8</span>
+                        <label class="text-sm font-bold text-blue-600 uppercase tracking-wider">Result Matrix</label>
+                        <span class="text-xs text-slate-500 bg-white border border-slate-200 px-2 py-1 rounded">8x8</span>
                     </div>
                     
                     <div class="relative flex-grow mb-4">
-                        <textarea id="output-matrix" readonly class="w-full h-full bg-slate-950 border border-slate-700 rounded-xl p-4 font-mono text-xs text-blue-300 focus:outline-none focus:border-blue-500 resize-none leading-relaxed tracking-wide shadow-inner"></textarea>
+                        <textarea id="output-matrix" readonly class="w-full h-full bg-white border border-slate-200 rounded-xl p-4 font-mono text-xs text-slate-600 focus:outline-none focus:border-blue-500 resize-none leading-relaxed tracking-wide shadow-inner"></textarea>
                     </div>
 
-                    <button onclick="copyToClipboard('output-matrix', this)" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 group">
+                    <button onclick="copyToClipboard('output-matrix', this)" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2 group">
                         <i class="fa-regular fa-copy group-hover:scale-110 transition-transform"></i> Copy Matrix
                     </button>
-                    <p class="text-[10px] text-slate-500 text-center mt-3">Ready to paste into your Python script</p>
+                    <p class="text-[10px] text-slate-400 text-center mt-3">Ready to paste into your Python script</p>
                 </div>
             </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: Lab Report (FIXED INTEGRATION) -->
+      <div id="tab-report" class="tab-content">
+        <!-- 
+           修复说明：
+           1. 移除了 'h-full', 'overflow-y-auto', 'bg-white', 'p-6' 等样式。
+           2. 让内容直接继承外层卡片的样式，避免双重内边距和嵌套滚动条。
+           3. 这样页面会自然伸长，利用浏览器原生滚动条，体验更好。
+        -->
+        <div class="report-container max-w-4xl mx-auto">
+            
+            <!-- Report Header -->
+            <div class="report-header border-b-2 border-slate-100 pb-8 mb-8">
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Lab Report</h1>
+                
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 text-slate-600 mt-6">
+                    <div class="space-y-2">
+                        <p class="font-bold text-xl text-slate-800">Individual Report</p>
+                        <p class="text-sm text-slate-600"><span class="font-semibold text-slate-900">Due date:</span> 27 Feb 2026, 23:59</p>
+                        <p class="text-sm text-slate-600"><span class="font-semibold text-slate-900">Include:</span> Code, figures, Screenshot</p>
+                    </div>
+                    
+                    <div class="md:text-right bg-slate-50 p-4 rounded-xl border border-slate-200 w-full md:w-auto shadow-sm">
+                        <p class="text-slate-900 font-bold text-lg">Liu Chenwanli</p>
+                        <p class="text-sm text-slate-500 font-mono">chenwli.liu@connect.polyu.hk</p>
+                        <div class="mt-3 pt-3 border-t border-slate-200">
+                            <p class="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center justify-end gap-2">
+                                Submit PDF to Blackboard <i class="fa-solid fa-upload"></i>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 全局排版容器 -->
+            <div class="space-y-12 text-slate-700 leading-relaxed">
+
+                <!-- Part 0 -->
+                <section>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">Part 0: Data Acquisition</h2>
+                    <p class="mb-6 text-lg">
+                        Before starting the coding tasks, complete the two interactive mini-games on the course page. These games will generate the unique datasets you need for this report.
+                    </p>
+                    
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg shadow-sm mb-8">
+                        <h4 class="font-bold text-blue-900 text-sm uppercase mb-3 tracking-wide">Task Checklist</h4>
+                        <ol class="list-decimal list-inside text-blue-800 space-y-2 font-medium">
+                            <li class="pl-2"><strong>Reaction Time Test:</strong> Click the changing area 10 times.</li>
+                            <li class="pl-2"><strong>Pixel Art:</strong> Draw a pattern on the \(8\times8\) grid.</li>
+                        </ol>
+                    </div>
+
+                    <p class="text-sm text-slate-500 italic border border-dashed border-slate-300 p-4 rounded-lg text-center bg-slate-50/50">
+                        <i class="fa-solid fa-circle-info mr-2 text-blue-500"></i>
+                        Kind Remind: Remember to include the screenshots in your final PDF report.
+                    </p>
+                </section>
+
+                <!-- Problem 1 -->
+                <section>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">Problem 1: Physiological Data Analysis</h2>
+                    <p class="mb-6">
+                        <strong class="text-slate-900">Context:</strong> You are analyzing a dataset representing human reaction speeds. Your goal is to process this vector to determine performance metrics and visualize trends over time.
+                    </p>
+                    
+                    <!-- Sub-section 1.1 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">1.1</span> Data Initialization
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
+                            <li>Create a NumPy array (vector) named <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">v_reaction</code> containing your 10 reaction time values.</li>
+                            <li>Print the array and its <strong>shape</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Sub-section 1.2 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">1.2</span> Statistical Analysis
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
+                            <li>Calculate and print the <strong>average (mean)</strong> reaction time.</li>
+                            <li>Calculate and print the <strong>standard deviation</strong> (or variance) to see how consistent you were.</li>
+                            <li class="list-none pt-1">
+                                <div class="text-slate-500 text-sm italic bg-yellow-50 p-2 rounded border-l-2 border-yellow-400 inline-block">
+                                    Note: You may use built-in NumPy functions or write your own logic.
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Sub-section 1.3 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">1.3</span> Performance Thresholding
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
+                            <li>Define a "success" threshold (e.g., any time faster than your average).</li>
+                            <li>Create a new list or array containing <strong>only</strong> the reaction times that met this threshold.</li>
+                            <li>Print this filtered list.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Sub-section 1.4 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">1.4</span> Trend Visualization
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
+                            <li>Generate a time vector <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">x</code> representing the attempt numbers (1 to 10).</li>
+                            <li>Plot your reaction times (<code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">v_reaction</code>) against the attempt number (<code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">x</code>).</li>
+                            <li>Add a horizontal line to the plot representing your <strong>average</strong> reaction time.</li>
+                            <li class="bg-slate-50 p-3 rounded border border-slate-100 mt-2">
+                                <strong class="text-slate-900 block mb-1">Analysis:</strong> 
+                                Look at the plot. Did you get faster, slower, or stay consistent as the 10 attempts progressed? Write a brief comment in your code or a text cell.
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Problem 2 -->
+                <section>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4 pb-2 border-b border-slate-200">Problem 2: Matrix Transformations</h2>
+                    <p class="mb-6">
+                        <strong class="text-slate-900">Context:</strong> In Control Systems and Computer Vision, matrices often represent 2D maps or images. You will manipulate your "Pixel Art" matrix to understand how matrix operations affect spatial data.
+                    </p>
+
+                    <!-- Sub-section 2.1 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.1</span> Matrix Initialization
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
+                            <li>Define your \(8\times8\) matrix in Python as a NumPy array named <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code>.</li>
+                            <li>Print the matrix and its shape.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Sub-section 2.2 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.2</span> Operation A: The Transpose
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
+                            <li>Create a new matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code> which is the <strong>transpose</strong> of <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code>.</li>
+                            <li>Print <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code>.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Sub-section 2.3 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.3</span> Operation B: Slicing (Zooming)
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
+                            <li>Create a new matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_zoom</code> that consists only of the <strong>central \(4\times4\) area</strong> of your original matrix.</li>
+                            <li>Print <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_zoom</code>.</li>
+                        </ul>
+                    </div>
+
+                    <!-- Sub-section 2.4 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.4</span> Visual Analysis
+                        </h3>
+                        <ul class="list-decimal pl-6 space-y-4 marker:text-slate-500 marker:font-semibold">
+                            <li>
+                                <strong>Plot the rows</strong> of your original matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code>.
+                                <p class="mt-1 text-sm text-slate-500 italic">Hint: If you use <code class="text-xs">plt.plot(M_art)</code>, Matplotlib will treat each column as a separate line.</p>
+                            </li>
+                            <li>
+                                <strong>Plot the rows</strong> of your transposed matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code> in a separate figure.
+                            </li>
+                            <li>
+                                <strong>Compare the two plots.</strong>
+                                <div class="mt-2 ml-4 p-3 bg-indigo-50 rounded border border-indigo-100 text-indigo-900 text-sm">
+                                    <strong>Question:</strong> How did the Transpose operation change the visual representation of the data? Did the "peaks" in your graph move?
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Sub-section 2.5 -->
+                    <div class="mb-6">
+                        <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.5</span> 3D Surface (Optional)
+                        </h3>
+                        <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
+                            <li>Use the 3D plotting code provided in the lecture (<code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">projection='3d'</code>) to visualize your original matrix as a 3D surface.</li>
+                            <li>Does the 3D shape correspond to the pattern you drew in the game?</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Print Button -->
+            <div class="flex justify-center mt-20 mb-12 print:hidden">
+                <button onclick="window.print()" class="group px-8 py-3 bg-slate-800 text-white font-medium rounded-full hover:bg-slate-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-3 transform hover:-translate-y-1">
+                    <i class="fa-solid fa-print group-hover:scale-110 transition-transform"></i> 
+                    Print / Save as PDF
+                </button>
+            </div>
+
         </div>
       </div>
 
@@ -187,7 +409,7 @@
   </main>
 
   <!-- Footer -->
-  <footer class="relative z-10 py-6 text-center text-slate-500 text-xs">
+  <footer class="relative z-10 py-6 text-center text-slate-400 text-xs print:hidden">
     <p>Python Control Systems Course &copy; 2026</p>
   </footer>
 
@@ -220,14 +442,14 @@
             if (this.y < 0 || this.y > height) this.vy *= -1;
         }
         draw() {
-            ctx.fillStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.fillStyle = 'rgba(71, 85, 105, 0.15)'; 
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
             ctx.fill();
         }
     }
 
-    for (let i = 0; i < 50; i++) particles.push(new Particle());
+    for (let i = 0; i < 60; i++) particles.push(new Particle());
 
     function animate() {
         ctx.clearRect(0, 0, width, height);
@@ -240,7 +462,7 @@
                 const dy = p.y - p2.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < 150) {
-                    ctx.strokeStyle = `rgba(148, 163, 184, ${0.1 - dist/1500})`;
+                    ctx.strokeStyle = `rgba(71, 85, 105, ${0.1 - dist/1500})`;
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(p.x, p.y);
@@ -256,34 +478,43 @@
 
     // --- TAB SYSTEM ---
     function switchTab(tabName) {
+        // Content switching
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
         document.getElementById(`tab-${tabName}`).classList.add('active');
         
+        // Desktop Nav Active State
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active-link'));
+        if(document.getElementById(`nav-${tabName}`)) {
+            document.getElementById(`nav-${tabName}`).classList.add('active-link');
+        }
+
         const title = document.getElementById('page-title');
         const desc = document.getElementById('page-desc');
         
+        // Mobile Nav Active State
+        const btns = ['reaction', 'matrix', 'report'];
+        btns.forEach(b => {
+            const btn = document.getElementById(`mob-tab-${b}`);
+            if (b === tabName) {
+                btn.className = "flex-1 py-2 text-xs font-bold rounded-md transition-colors bg-white text-blue-600 shadow-sm border border-slate-100";
+            } else {
+                btn.className = "flex-1 py-2 text-xs font-bold rounded-md transition-colors text-slate-500 hover:text-slate-700 hover:bg-slate-50";
+            }
+        });
+
+        // Title Updates
         if (tabName === 'reaction') {
             title.innerText = 'Reaction Timer';
             desc.innerText = 'Collect reaction data for your statistical analysis assignment.';
-        } else {
+        } else if (tabName === 'matrix') {
             title.innerText = 'Matrix Builder';
             desc.innerText = 'Draw your initial to generate a binary matrix.';
-            // Re-render grid to ensure sizing is correct if hidden previously
-            setTimeout(initGrid, 50);
-        }
-
-        const btnR = document.getElementById('mob-tab-reaction');
-        const btnM = document.getElementById('mob-tab-matrix');
-        if(tabName === 'reaction') {
-            btnR.classList.add('bg-blue-600', 'text-white');
-            btnR.classList.remove('text-slate-400');
-            btnM.classList.remove('bg-blue-600', 'text-white');
-            btnM.classList.add('text-slate-400');
-        } else {
-            btnM.classList.add('bg-blue-600', 'text-white');
-            btnM.classList.remove('text-slate-400');
-            btnR.classList.remove('bg-blue-600', 'text-white');
-            btnR.classList.add('text-slate-400');
+            setTimeout(initGrid, 50); // Re-render grid
+        } else if (tabName === 'report') {
+            title.innerText = 'Assignment Report';
+            desc.innerText = 'Review the requirements and questions.';
+            // Trigger MathJax re-render in case it was hidden
+            if (window.MathJax) MathJax.typeset();
         }
     }
 
@@ -337,42 +568,43 @@
     }
 
     function setGameStyle(state, timeVal) {
+        // Base classes
         gameArea.className = "relative group cursor-pointer w-full h-[350px] md:h-[400px] rounded-2xl border-2 flex flex-col items-center justify-center transition-all duration-200 overflow-hidden shadow-inner select-none";
         
         if (state === 'waiting') {
-            gameArea.classList.add('bg-slate-800/50', 'border-dashed', 'border-slate-600', 'hover:border-blue-400', 'hover:bg-slate-800');
+            gameArea.classList.add('bg-slate-50', 'border-dashed', 'border-slate-300', 'hover:border-blue-400', 'hover:bg-white');
             gameStatus.innerText = "Click to Start";
-            gameStatus.className = "text-3xl md:text-5xl font-bold text-slate-300 text-center";
+            gameStatus.className = "text-3xl md:text-5xl font-bold text-slate-400 text-center";
             gameSub.innerText = "Wait for green, then click fast!";
-            gameIcon.className = "fa-solid fa-bolt text-5xl md:text-6xl mb-6 text-slate-500";
+            gameIcon.className = "fa-solid fa-bolt text-5xl md:text-6xl mb-6 text-slate-300";
         } else if (state === 'ready') {
-            gameArea.classList.add('bg-red-900/20', 'border-red-500/50');
+            gameArea.classList.add('bg-red-50', 'border-red-200');
             gameStatus.innerText = "Wait for Green...";
-            gameStatus.className = "text-3xl md:text-5xl font-bold text-red-400 animate-pulse text-center";
+            gameStatus.className = "text-3xl md:text-5xl font-bold text-red-500 animate-pulse text-center";
             gameSub.innerText = "Do not click yet!";
             gameIcon.className = "fa-regular fa-hand text-5xl md:text-6xl mb-6 text-red-400";
         } else if (state === 'green') {
-            gameArea.classList.add('bg-emerald-600', 'border-emerald-400', 'shadow-[0_0_50px_rgba(16,185,129,0.5)]');
+            gameArea.classList.add('bg-emerald-500', 'border-emerald-600', 'shadow-[0_0_50px_rgba(16,185,129,0.4)]');
             gameStatus.innerText = "CLICK NOW!";
             gameStatus.className = "text-5xl md:text-7xl font-black text-white scale-110 text-center";
             gameSub.innerText = "";
             gameIcon.className = "hidden";
         } else if (state === 'early') {
-            gameArea.classList.add('bg-slate-800', 'border-red-500');
+            gameArea.classList.add('bg-slate-100', 'border-red-400');
             gameStatus.innerText = "Too Early!";
-            gameStatus.className = "text-3xl md:text-5xl font-bold text-red-400 text-center";
+            gameStatus.className = "text-3xl md:text-5xl font-bold text-red-500 text-center";
             gameSub.innerText = "Click to try again.";
             gameIcon.className = "fa-solid fa-triangle-exclamation text-5xl md:text-6xl mb-6 text-red-500";
         } else if (state === 'success') {
-            gameArea.classList.add('bg-slate-800', 'border-emerald-500/50');
+            gameArea.classList.add('bg-slate-50', 'border-emerald-300');
             gameStatus.innerText = `${timeVal}s`;
-            gameStatus.className = "text-5xl md:text-7xl font-mono font-bold text-emerald-400 text-center";
+            gameStatus.className = "text-5xl md:text-7xl font-mono font-bold text-emerald-500 text-center";
             gameSub.innerText = "Click to continue";
             gameIcon.className = "fa-solid fa-check text-5xl md:text-6xl mb-6 text-emerald-500";
         } else if (state === 'finished') {
-            gameArea.classList.add('bg-slate-800', 'border-blue-500');
+            gameArea.classList.add('bg-blue-50', 'border-blue-300');
             gameStatus.innerText = "Session Complete";
-            gameStatus.className = "text-4xl md:text-5xl font-bold text-blue-400 text-center";
+            gameStatus.className = "text-4xl md:text-5xl font-bold text-blue-600 text-center";
             gameSub.innerText = "Copy your array below.";
             gameIcon.className = "fa-solid fa-clipboard-check text-5xl md:text-6xl mb-6 text-blue-500";
             gameArea.classList.remove('cursor-pointer');
@@ -386,11 +618,11 @@
         progressText.innerText = reactionTimes.length;
         
         if (reactionTimes.length === MAX_ATTEMPTS) {
-            progressBar.classList.add('bg-green-500', 'progress-stripe');
+            progressBar.classList.add('bg-emerald-500', 'progress-stripe');
             progressBar.classList.remove('bg-blue-600');
         } else {
             progressBar.classList.add('bg-blue-600');
-            progressBar.classList.remove('bg-green-500', 'progress-stripe');
+            progressBar.classList.remove('bg-emerald-500', 'progress-stripe');
         }
 
         if (reactionTimes.length === 0) {
@@ -413,38 +645,35 @@
         navigator.clipboard.writeText(textToCopy).then(() => {
             const originalHTML = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-            btn.classList.add('bg-green-600', 'text-white', 'border-green-500');
-            btn.classList.remove('bg-slate-700', 'border-slate-600');
+            btn.classList.add('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+            btn.classList.remove('bg-white', 'text-slate-600', 'border-slate-200');
             setTimeout(() => {
                 btn.innerHTML = originalHTML;
-                btn.classList.remove('bg-green-600', 'text-white', 'border-green-500');
-                btn.classList.add('bg-slate-700', 'border-slate-600');
+                btn.classList.remove('bg-emerald-100', 'text-emerald-700', 'border-emerald-300');
+                btn.classList.add('bg-white', 'text-slate-600', 'border-slate-200');
             }, 2000);
         });
     }
 
 
-    // --- TOOL 2: MATRIX BUILDER (IMPROVED) ---
+    // --- TOOL 2: MATRIX BUILDER ---
     const gridSize = 8;
     let matrix = Array(gridSize).fill().map(() => Array(gridSize).fill(0));
     const gridContainer = document.getElementById('pixel-grid');
     const outputMatrix = document.getElementById('output-matrix');
     
-    // Drawing State
     let isDrawing = false;
-    let drawMode = 1; // 1 to draw, 0 to erase
+    let drawMode = 1; 
 
     function initGrid() {
         gridContainer.innerHTML = '';
         for(let i=0; i<gridSize; i++) {
             for(let j=0; j<gridSize; j++) {
                 const cell = document.createElement('div');
-                // Increased size: w-10/h-10 on mobile, w-14/h-14 on desktop
-                cell.className = "grid-cell w-10 h-10 md:w-14 md:h-14 rounded-md bg-slate-800 border border-slate-700 cursor-pointer shadow-sm";
+                cell.className = "grid-cell w-10 h-10 md:w-14 md:h-14 rounded-md bg-slate-200 border border-slate-300 cursor-pointer shadow-sm";
                 cell.dataset.r = i;
                 cell.dataset.c = j;
                 
-                // Mouse Events
                 cell.addEventListener('mousedown', (e) => startDraw(i, j, e));
                 cell.addEventListener('mouseenter', () => continueDraw(i, j));
                 
@@ -452,10 +681,7 @@
             }
         }
         
-        // Global mouse up to stop drawing
         document.addEventListener('mouseup', () => { isDrawing = false; });
-        
-        // Touch Events (for mobile drag)
         gridContainer.addEventListener('touchstart', handleTouchStart, {passive: false});
         gridContainer.addEventListener('touchmove', handleTouchMove, {passive: false});
         gridContainer.addEventListener('touchend', () => { isDrawing = false; });
@@ -467,7 +693,6 @@
     function startDraw(r, c, e) {
         if(e) e.preventDefault();
         isDrawing = true;
-        // Determine mode: if clicking on empty, draw. If clicking on filled, erase.
         drawMode = matrix[r][c] === 0 ? 1 : 0;
         updateCell(r, c);
     }
@@ -486,7 +711,6 @@
         }
     }
 
-    // Handle Touch Logic
     function handleTouchStart(e) {
         e.preventDefault();
         const touch = e.touches[0];
@@ -516,11 +740,11 @@
         const val = matrix[r][c];
         
         if (val === 1) {
-            cell.classList.remove('bg-slate-800', 'border-slate-700');
-            cell.classList.add('bg-blue-500', 'border-blue-400', 'shadow-[0_0_15px_rgba(59,130,246,0.6)]', 'scale-105');
+            cell.classList.remove('bg-slate-200', 'border-slate-300');
+            cell.classList.add('bg-blue-500', 'border-blue-600', 'shadow-md', 'scale-105');
         } else {
-            cell.classList.add('bg-slate-800', 'border-slate-700');
-            cell.classList.remove('bg-blue-500', 'border-blue-400', 'shadow-[0_0_15px_rgba(59,130,246,0.6)]', 'scale-105');
+            cell.classList.add('bg-slate-200', 'border-slate-300');
+            cell.classList.remove('bg-blue-500', 'border-blue-600', 'shadow-md', 'scale-105');
         }
     }
 
@@ -533,7 +757,6 @@
     }
 
     function updateMatrixOutput() {
-        // Simplified Output: Just the list of lists
         let code = "[\n";
         matrix.forEach((row, idx) => {
             code += "  [" + row.join(", ") + "]" + (idx < gridSize-1 ? "," : "") + "\n";
@@ -565,7 +788,7 @@
             const originalClasses = btn.className;
             
             btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
-            btn.className = "w-full py-3 bg-green-600 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2";
+            btn.className = "w-full py-3 bg-emerald-600 text-white font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2";
             
             setTimeout(() => {
                 btn.innerHTML = originalHTML;
