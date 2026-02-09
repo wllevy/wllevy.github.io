@@ -221,7 +221,7 @@
                     </div>
                     
                     <div class="md:text-right bg-slate-50 p-4 rounded-xl border border-slate-200 w-full md:w-auto shadow-sm">
-                        <p class="text-slate-900 font-bold text-lg">Liu Chenwanli</p>
+                        <p class="text-slate-900 font-bold text-lg">TA: Liu Chenwanli</p>
                         <p class="text-sm text-slate-500 font-mono">chenwli.liu@connect.polyu.hk</p>
                         <div class="mt-3 pt-3 border-t border-slate-200">
                             <p class="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center justify-end gap-2">
@@ -358,24 +358,23 @@
                             <li>Print <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_zoom</code>.</li>
                         </ul>
                     </div>
-
                     <!-- Sub-section 2.4 -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.4</span> Visual Analysis
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.4</span> Visual Analysis (Spatial Mapping)
                         </h3>
                         <ul class="list-decimal pl-6 space-y-4 marker:text-slate-500 marker:font-semibold">
                             <li>
-                                <strong>Plot the rows</strong> of your original matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code>.
-                                <p class="mt-1 text-sm text-slate-500 italic">Hint: If you use <code class="text-xs">plt.plot(M_art)</code>, Matplotlib will treat each column as a separate line.</p>
+                                <strong>Visualize the original matrix</strong> <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_art</code> as a 2D image or heatmap.
+                                <p class="mt-1 text-sm text-slate-500 italic">Hint: Use <code class="text-xs">plt.imshow(M_art, cmap='Blues')</code> to see the spatial distribution of your 0s and 1s.</p>
                             </li>
                             <li>
-                                <strong>Plot the rows</strong> of your transposed matrix <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code> in a separate figure.
+                                <strong>Visualize the transposed matrix</strong> <code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">M_T</code> in a separate figure to observe the transformation.
                             </li>
                             <li>
-                                <strong>Compare the two plots.</strong>
+                                <strong>Compare the two images.</strong>
                                 <div class="mt-2 ml-4 p-3 bg-indigo-50 rounded border border-indigo-100 text-indigo-900 text-sm">
-                                    <strong>Question:</strong> How did the Transpose operation change the visual representation of the data? Did the "peaks" in your graph move?
+                                    <strong>Question:</strong> How did the Transpose operation change the orientation of your art? (e.g., Did horizontal lines become vertical? Is the image reflected across the diagonal?)
                                 </div>
                             </li>
                         </ul>
@@ -384,11 +383,16 @@
                     <!-- Sub-section 2.5 -->
                     <div class="mb-6">
                         <h3 class="text-xl font-semibold text-slate-800 mb-3 flex items-center gap-2">
-                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.5</span> 3D Surface (Optional)
+                            <span class="bg-slate-200 text-slate-700 text-sm py-1 px-2 rounded">2.5</span> 3D Voxel Visualization
                         </h3>
                         <ul class="list-disc pl-6 space-y-2 marker:text-slate-400">
-                            <li>Use the 3D plotting code provided in the lecture (<code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">projection='3d'</code>) to visualize your original matrix as a 3D surface.</li>
-                            <li>Does the 3D shape correspond to the pattern you drew in the game?</li>
+                            <li>
+                                Use 3D plotting (<code class="bg-slate-100 text-pink-600 font-mono px-1.5 py-0.5 rounded text-sm border border-slate-200">projection='3d'</code>) to create a <strong>3D Bar Chart (Voxel Map)</strong> where each '1' in your matrix is represented by a solid block.
+                                <p class="mt-1 text-sm text-slate-500 italic">Hint: <code class="text-xs">ax.bar3d</code> works better than a smooth surface for binary (0/1) data.</p>
+                            </li>
+                            <li>
+                                <strong>Analysis:</strong> Does this "3D relief" accurately represent the structure of your pixel art? How does the added Z-height help in distinguishing the pattern from the background?
+                            </li>
                         </ul>
                     </div>
                 </section>
